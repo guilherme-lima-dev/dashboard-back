@@ -7,4 +7,160 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Será preenchido nas próximas fases com as migrations
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  fullName      String    @map("full_name")
+  status        String    @default("pending_approval")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+
+  createdBy     User?                @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers  User[]               @relation("UserCreator")
+  userRoles     UserRole[]
+  refreshTokens RefreshToken[]
+  auditLogs     PermissionAuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id           String  @id @default(uuid())
+  name         String  @unique
+  slug         String  @unique
+  description  String?
+  isSystemRole Boolean @default(false) @map("is_system_role")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String?  @map("created_by_id")
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("roles")
+}
+
+model Resource {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  parentId    String? @map("parent_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  parent      Resource?    @relation("ResourceHierarchy", fields: [parentId], references: [id])
+  children    Resource[]   @relation("ResourceHierarchy")
+  permissions Permission[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("resources")
+}
+
+model Action {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  permissions Permission[]
+
+  @@index([slug])
+  @@map("actions")
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  resourceId  String  @map("resource_id")
+  actionId    String  @map("action_id")
+  description String?
+  conditions  Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  resource        Resource         @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  action          Action           @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
+
+  @@unique([resourceId, actionId])
+  @@index([resourceId])
+  @@index([actionId])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String  @id @default(uuid())
+  roleId       String  @map("role_id")
+  permissionId String  @map("permission_id")
+  granted      Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  roleId       String   @map("role_id")
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+  assignedById String?  @map("assigned_by_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  token        String    @unique
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  revokedAt    DateTime? @map("revoked_at")
+  replacedById String?   @map("replaced_by_id")
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedBy   RefreshToken?  @relation("TokenReplacement", fields: [replacedById], references: [id])
+  replacements RefreshToken[] @relation("TokenReplacement")
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model PermissionAuditLog {
+  id        String  @id @default(uuid())
+  userId    String? @map("user_id")
+  action    String
+  resource  String?
+  details   Json?
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("permission_audit_logs")
+}

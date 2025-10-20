@@ -17,6 +17,9 @@ import { AffiliatesModule } from './modules/affiliates/affiliates.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { JobsModule } from './jobs/jobs.module';
+import {APP_GUARD} from "@nestjs/core";
+import {JwtAuthGuard} from "./common/guards/jwt-auth.guard";
+import {PermissionsGuard} from "./common/guards/permissions.guard";
 
 @Module({
   imports: [
@@ -44,6 +47,16 @@ import { JobsModule } from './jobs/jobs.module';
     AnalyticsModule,
     AuditModule,
     JobsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
   ],
 })
 export class AppModule {}
