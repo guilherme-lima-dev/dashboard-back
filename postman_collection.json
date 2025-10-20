@@ -1,0 +1,1652 @@
+{
+  "info": {
+    "name": "Analytics Platform API - Fases 1, 2 & 3",
+    "description": "Collection para testar a API do Analytics Platform - Fases 1 (Auth), 2 (Platforms) e 3 (Products & Offers)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@analytics.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Faz login e retorna tokens JWT"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "    console.log('Tokens salvos nas variáveis da collection');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Renova o access token usando refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Retorna o perfil do usuário autenticado"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Faz logout e invalida o refresh token"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de autenticação e gestão de tokens"
+    },
+    {
+      "name": "🏪 Platforms",
+      "item": [
+        {
+          "name": "List All Platforms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platforms",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms"]
+            },
+            "description": "Lista todas as plataformas cadastradas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Platform by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platforms/{{platformId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms", "{{platformId}}"]
+            },
+            "description": "Busca uma plataforma específica por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Platform by Slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platforms/slug/stripe",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms", "slug", "stripe"]
+            },
+            "description": "Busca uma plataforma pelo slug"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Platform",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"PayPal\",\n  \"slug\": \"paypal\",\n  \"isEnabled\": true,\n  \"config\": {\n    \"description\": \"PayPal payment platform\",\n    \"webhookEndpoint\": \"/webhooks/paypal\",\n    \"supportedCurrencies\": [\"USD\", \"EUR\", \"GBP\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platforms",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms"]
+            },
+            "description": "Cria uma nova plataforma"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('platformId', response.id);",
+                  "    console.log('Platform ID salvo:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Platform",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"PayPal Updated\",\n  \"isEnabled\": false,\n  \"config\": {\n    \"description\": \"PayPal payment platform - Updated\",\n    \"webhookEndpoint\": \"/webhooks/paypal-v2\",\n    \"supportedCurrencies\": [\"USD\", \"EUR\", \"GBP\", \"CAD\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platforms/{{platformId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms", "{{platformId}}"]
+            },
+            "description": "Atualiza uma plataforma existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Platform",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platforms/{{platformId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["platforms", "{{platformId}}"]
+            },
+            "description": "Remove uma plataforma do sistema"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestão de plataformas de pagamento"
+    },
+    {
+      "name": "📦 Products",
+      "item": [
+        {
+          "name": "List All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            },
+            "description": "Lista todos os produtos cadastrados"
+          },
+          "response": []
+        },
+        {
+          "name": "List Products by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products?type=subscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "subscription",
+                  "description": "Filtrar por tipo de produto"
+                }
+              ]
+            },
+            "description": "Lista produtos filtrados por tipo"
+          },
+          "response": []
+        },
+        {
+          "name": "List Active Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products?active=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filtrar apenas produtos ativos"
+                }
+              ]
+            },
+            "description": "Lista apenas produtos ativos"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            },
+            "description": "Busca um produto específico por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product by Slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/slug/holymind",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "slug", "holymind"]
+            },
+            "description": "Busca um produto pelo slug"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Products by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/type/subscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "type", "subscription"]
+            },
+            "description": "Lista produtos de um tipo específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/active/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "active", "list"]
+            },
+            "description": "Lista apenas produtos ativos"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Product\",\n  \"slug\": \"test-product\",\n  \"description\": \"Produto para testes\",\n  \"productType\": \"subscription\",\n  \"isActive\": true,\n  \"metadata\": {\n    \"category\": \"test\",\n    \"target\": \"B2C\",\n    \"features\": [\"feature1\", \"feature2\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            },
+            "description": "Cria um novo produto"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('productId', response.id);",
+                  "    console.log('Product ID salvo:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Product Updated\",\n  \"description\": \"Produto para testes - Atualizado\",\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            },
+            "description": "Atualiza um produto existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{productId}}"]
+            },
+            "description": "Remove um produto do catálogo"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestão de produtos do catálogo"
+    },
+    {
+      "name": "💎 Offers",
+      "item": [
+        {
+          "name": "List All Offers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"]
+            },
+            "description": "Lista todas as ofertas cadastradas"
+          },
+          "response": []
+        },
+        {
+          "name": "List Offers by Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers?productId={{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}",
+                  "description": "Filtrar por ID do produto"
+                }
+              ]
+            },
+            "description": "Lista ofertas de um produto específico"
+          },
+          "response": []
+        },
+        {
+          "name": "List Offers by Billing Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers?billingType=recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"],
+              "query": [
+                {
+                  "key": "billingType",
+                  "value": "recurring",
+                  "description": "Filtrar por tipo de cobrança"
+                }
+              ]
+            },
+            "description": "Lista ofertas por tipo de cobrança"
+          },
+          "response": []
+        },
+        {
+          "name": "List Active Offers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers?active=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"],
+              "query": [
+                {
+                  "key": "active",
+                  "value": "true",
+                  "description": "Filtrar apenas ofertas ativas"
+                }
+              ]
+            },
+            "description": "Lista apenas ofertas ativas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Offer by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/{{offerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "{{offerId}}"]
+            },
+            "description": "Busca uma oferta específica por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Offer by Slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/slug/holymind-mensal",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "slug", "holymind-mensal"]
+            },
+            "description": "Busca uma oferta pelo slug"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Offers by Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/product/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "product", "{{productId}}"]
+            },
+            "description": "Lista ofertas de um produto específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Offers by Billing Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/type/recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "type", "recurring"]
+            },
+            "description": "Lista ofertas de um tipo específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Offers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/active/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "active", "list"]
+            },
+            "description": "Lista apenas ofertas ativas"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"name\": \"Test Offer\",\n  \"slug\": \"test-offer\",\n  \"description\": \"Oferta para testes\",\n  \"billingType\": \"recurring\",\n  \"billingPeriod\": \"monthly\",\n  \"billingInterval\": 1,\n  \"hasTrial\": true,\n  \"trialPeriodDays\": 7,\n  \"trialAmount\": 990,\n  \"isActive\": true,\n  \"metadata\": {\n    \"features\": [\"feature1\", \"feature2\"],\n    \"targetAudience\": \"test_users\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/offers",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers"]
+            },
+            "description": "Cria uma nova oferta"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('offerId', response.id);",
+                  "    console.log('Offer ID salvo:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Offer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Offer Updated\",\n  \"description\": \"Oferta para testes - Atualizada\",\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/offers/{{offerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "{{offerId}}"]
+            },
+            "description": "Atualiza uma oferta existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Offer",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/offers/{{offerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["offers", "{{offerId}}"]
+            },
+            "description": "Remove uma oferta do catálogo"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gestão de ofertas do catálogo"
+    },
+    {
+      "name": "🧪 Test Scenarios",
+      "item": [
+        {
+          "name": "Complete Flow Test - All Phases",
+          "item": [
+            {
+              "name": "1. Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@analytics.com\",\n  \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const response = pm.response.json();",
+                      "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                      "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                      "    console.log('✅ Login realizado com sucesso');",
+                      "} else {",
+                      "    console.log('❌ Erro no login:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Get Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "me"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const profile = pm.response.json();",
+                      "    console.log('✅ Perfil obtido:', profile.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao obter perfil:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. List Platforms",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/platforms",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platforms"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const platforms = pm.response.json();",
+                      "    console.log('✅ Plataformas encontradas:', platforms.length);",
+                      "    if (platforms.length > 0) {",
+                      "        pm.collectionVariables.set('platformId', platforms[0].id);",
+                      "        console.log('✅ Platform ID salvo:', platforms[0].id);",
+                      "    }",
+                      "} else {",
+                      "    console.log('❌ Erro ao listar plataformas:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Get Platform by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/platforms/{{platformId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platforms", "{{platformId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const platform = pm.response.json();",
+                      "    console.log('✅ Plataforma encontrada:', platform.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar plataforma:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Create New Platform",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Platform\",\n  \"slug\": \"test-platform\",\n  \"isEnabled\": true,\n  \"config\": {\n    \"description\": \"Platform for testing\",\n    \"webhookEndpoint\": \"/webhooks/test\",\n    \"supportedCurrencies\": [\"USD\"]\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platforms",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platforms"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const platform = pm.response.json();",
+                      "    pm.collectionVariables.set('testPlatformId', platform.id);",
+                      "    console.log('✅ Plataforma criada:', platform.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao criar plataforma:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. Update Test Platform",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Platform Updated\",\n  \"isEnabled\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/platforms/{{testPlatformId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platforms", "{{testPlatformId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const platform = pm.response.json();",
+                      "    console.log('✅ Plataforma atualizada:', platform.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao atualizar plataforma:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "7. List Products",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const products = pm.response.json();",
+                      "    console.log('✅ Produtos encontrados:', products.length);",
+                      "    if (products.length > 0) {",
+                      "        pm.collectionVariables.set('productId', products[0].id);",
+                      "        console.log('✅ Product ID salvo:', products[0].id);",
+                      "    }",
+                      "} else {",
+                      "    console.log('❌ Erro ao listar produtos:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "8. Get Product by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/products/{{productId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products", "{{productId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const product = pm.response.json();",
+                      "    console.log('✅ Produto encontrado:', product.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar produto:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "9. Create New Product",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Product\",\n  \"slug\": \"test-product\",\n  \"description\": \"Produto para testes\",\n  \"productType\": \"subscription\",\n  \"isActive\": true,\n  \"metadata\": {\n    \"category\": \"test\",\n    \"target\": \"B2C\",\n    \"features\": [\"feature1\", \"feature2\"]\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const product = pm.response.json();",
+                      "    pm.collectionVariables.set('testProductId', product.id);",
+                      "    console.log('✅ Produto criado:', product.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao criar produto:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "10. Update Test Product",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Product Updated\",\n  \"description\": \"Produto para testes - Atualizado\",\n  \"isActive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products/{{testProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products", "{{testProductId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const product = pm.response.json();",
+                      "    console.log('✅ Produto atualizado:', product.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao atualizar produto:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "11. List Offers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offers = pm.response.json();",
+                      "    console.log('✅ Ofertas encontradas:', offers.length);",
+                      "    if (offers.length > 0) {",
+                      "        pm.collectionVariables.set('offerId', offers[0].id);",
+                      "        console.log('✅ Offer ID salvo:', offers[0].id);",
+                      "    }",
+                      "} else {",
+                      "    console.log('❌ Erro ao listar ofertas:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "12. Get Offer by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers/{{offerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "{{offerId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offer = pm.response.json();",
+                      "    console.log('✅ Oferta encontrada:', offer.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar oferta:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "13. Create New Offer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": \"{{testProductId}}\",\n  \"name\": \"Test Offer\",\n  \"slug\": \"test-offer\",\n  \"description\": \"Oferta para testes\",\n  \"billingType\": \"recurring\",\n  \"billingPeriod\": \"monthly\",\n  \"billingInterval\": 1,\n  \"hasTrial\": true,\n  \"trialPeriodDays\": 7,\n  \"trialAmount\": 990,\n  \"isActive\": true,\n  \"metadata\": {\n    \"features\": [\"feature1\", \"feature2\"],\n    \"targetAudience\": \"test_users\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/offers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const offer = pm.response.json();",
+                      "    pm.collectionVariables.set('testOfferId', offer.id);",
+                      "    console.log('✅ Oferta criada:', offer.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao criar oferta:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "14. Update Test Offer",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Offer Updated\",\n  \"description\": \"Oferta para testes - Atualizada\",\n  \"isActive\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/offers/{{testOfferId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "{{testOfferId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offer = pm.response.json();",
+                      "    console.log('✅ Oferta atualizada:', offer.name);",
+                      "} else {",
+                      "    console.log('❌ Erro ao atualizar oferta:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "15. Test Offers by Product",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers/product/{{testProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "product", "{{testProductId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offers = pm.response.json();",
+                      "    console.log('✅ Ofertas do produto encontradas:', offers.length);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar ofertas do produto:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "16. Test Offers by Billing Type",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers/type/recurring",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "type", "recurring"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offers = pm.response.json();",
+                      "    console.log('✅ Ofertas recorrentes encontradas:', offers.length);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar ofertas recorrentes:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "17. Test Active Offers",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers/active/list",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "active", "list"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const offers = pm.response.json();",
+                      "    console.log('✅ Ofertas ativas encontradas:', offers.length);",
+                      "} else {",
+                      "    console.log('❌ Erro ao buscar ofertas ativas:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "18. Delete Test Offer",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/offers/{{testOfferId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["offers", "{{testOfferId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 204) {",
+                      "    console.log('✅ Oferta deletada com sucesso');",
+                      "} else {",
+                      "    console.log('❌ Erro ao deletar oferta:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "19. Delete Test Product",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/products/{{testProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products", "{{testProductId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 204) {",
+                      "    console.log('✅ Produto deletado com sucesso');",
+                      "} else {",
+                      "    console.log('❌ Erro ao deletar produto:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "20. Delete Test Platform",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/platforms/{{testPlatformId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platforms", "{{testPlatformId}}"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 204) {",
+                      "    console.log('✅ Plataforma deletada com sucesso');",
+                      "} else {",
+                      "    console.log('❌ Erro ao deletar plataforma:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "21. Logout",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    console.log('✅ Logout realizado com sucesso');",
+                      "    console.log('🎉 TESTE COMPLETO FINALIZADO COM SUCESSO!');",
+                      "    console.log('📊 Todas as funcionalidades das Fases 1, 2 e 3 foram testadas');",
+                      "} else {",
+                      "    console.log('❌ Erro no logout:', pm.response.text());",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "Teste completo automatizado de todas as funcionalidades das Fases 1, 2 e 3"
+        }
+      ],
+      "description": "Cenários de teste automatizados"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Verificar se o servidor está rodando",
+          "if (!pm.collectionVariables.get('baseUrl')) {",
+          "    pm.collectionVariables.set('baseUrl', 'http://localhost:4000');",
+          "}"
+        ]
+      }
+    }
+  ]
+}

@@ -240,10 +240,256 @@ async function main() {
     });
 
     console.log('✅ Super admin user created');
-    console.log('');
-    console.log('📧 Email: admin@analytics.com');
-    console.log('🔑 Password: Admin@123');
-    console.log('');
+
+    // ============================================
+    // 7. PLATFORMS (Phase 2)
+    // ============================================
+    console.log('🏪 Creating platforms...');
+
+    const platforms = [
+        {
+            name: 'Stripe',
+            slug: 'stripe',
+            isEnabled: true,
+            config: {
+                description: 'Stripe payment platform',
+                webhookEndpoint: '/webhooks/stripe',
+                supportedCurrencies: ['USD', 'BRL', 'EUR'],
+            },
+        },
+        {
+            name: 'Hotmart',
+            slug: 'hotmart',
+            isEnabled: true,
+            config: {
+                description: 'Hotmart digital products platform',
+                webhookEndpoint: '/webhooks/hotmart',
+                supportedCurrencies: ['BRL', 'USD'],
+            },
+        },
+        {
+            name: 'Cartpanda',
+            slug: 'cartpanda',
+            isEnabled: true,
+            config: {
+                description: 'Cartpanda checkout platform',
+                webhookEndpoint: '/webhooks/cartpanda',
+                supportedCurrencies: ['BRL', 'USD'],
+            },
+        },
+    ];
+
+    for (const platform of platforms) {
+        await prisma.platform.upsert({
+            where: { slug: platform.slug },
+            update: {},
+            create: platform,
+        });
+    }
+
+    console.log('✅ Platforms created');
+
+    // ============================================
+    // 8. PRODUCTS (Phase 3)
+    // ============================================
+    console.log('📦 Creating products...');
+
+    const products = [
+        {
+            name: 'Holymind',
+            slug: 'holymind',
+            description: 'Plataforma de meditação e mindfulness com cursos e sessões guiadas',
+            productType: 'subscription',
+            isActive: true,
+            metadata: {
+                category: 'health',
+                target: 'B2C',
+                features: ['meditation', 'sleep', 'anxiety', 'focus'],
+                targetAudience: 'adults',
+            },
+        },
+        {
+            name: 'Holyguide',
+            slug: 'holyguide',
+            description: 'Guia completo de desenvolvimento pessoal e espiritual',
+            productType: 'subscription',
+            isActive: true,
+            metadata: {
+                category: 'education',
+                target: 'B2C',
+                features: ['courses', 'ebooks', 'community', 'coaching'],
+                targetAudience: 'adults',
+            },
+        },
+        {
+            name: 'Holymind Lifetime',
+            slug: 'holymind-lifetime',
+            description: 'Acesso vitalício à plataforma Holymind',
+            productType: 'one_time',
+            isActive: true,
+            metadata: {
+                category: 'health',
+                target: 'B2C',
+                features: ['meditation', 'sleep', 'anxiety', 'focus'],
+                targetAudience: 'adults',
+                isLifetime: true,
+            },
+        },
+        {
+            name: 'Premium Support',
+            slug: 'premium-support',
+            description: 'Suporte premium para clientes VIP',
+            productType: 'addon',
+            isActive: true,
+            metadata: {
+                category: 'support',
+                target: 'B2C',
+                features: ['priority_support', 'dedicated_manager', 'phone_support'],
+                targetAudience: 'premium_customers',
+            },
+        },
+    ];
+
+    for (const product of products) {
+        await prisma.product.upsert({
+            where: { slug: product.slug },
+            update: {},
+            create: product,
+        });
+    }
+
+    console.log('✅ Products created');
+
+    // ============================================
+    // 9. OFFERS (Phase 3)
+    // ============================================
+    console.log('💎 Creating offers...');
+
+    // Buscar IDs dos produtos criados
+    const holymindProduct = await prisma.product.findUnique({
+      where: { slug: 'holymind' },
+    });
+
+    const holyguideProduct = await prisma.product.findUnique({
+      where: { slug: 'holyguide' },
+    });
+
+    const holymindLifetimeProduct = await prisma.product.findUnique({
+      where: { slug: 'holymind-lifetime' },
+    });
+
+    const premiumSupportProduct = await prisma.product.findUnique({
+      where: { slug: 'premium-support' },
+    });
+
+    if (holymindProduct && holyguideProduct && holymindLifetimeProduct && premiumSupportProduct) {
+      const offers = [
+        {
+          productId: holymindProduct.id,
+          name: 'Holymind Mensal',
+          slug: 'holymind-mensal',
+          description: 'Acesso mensal à plataforma Holymind',
+          billingType: 'recurring',
+          billingPeriod: 'monthly',
+          billingInterval: 1,
+          hasTrial: true,
+          trialPeriodDays: 7,
+          trialAmount: 990, // R$ 9,90
+          isActive: true,
+          metadata: {
+            features: ['unlimited_access', 'premium_content', 'meditation_sessions'],
+            limitations: ['no_download'],
+            targetAudience: 'individual_users',
+          },
+        },
+        {
+          productId: holymindProduct.id,
+          name: 'Holymind Anual',
+          slug: 'holymind-anual',
+          description: 'Acesso anual à plataforma Holymind com desconto',
+          billingType: 'recurring',
+          billingPeriod: 'yearly',
+          billingInterval: 1,
+          hasTrial: true,
+          trialPeriodDays: 14,
+          trialAmount: 1990, // R$ 19,90
+          isActive: true,
+          metadata: {
+            features: ['unlimited_access', 'premium_content', 'meditation_sessions', 'exclusive_content'],
+            limitations: ['no_download'],
+            targetAudience: 'committed_users',
+            discount: '2_months_free',
+          },
+        },
+        {
+          productId: holyguideProduct.id,
+          name: 'Holyguide Mensal',
+          slug: 'holyguide-mensal',
+          description: 'Acesso mensal ao Holyguide',
+          billingType: 'recurring',
+          billingPeriod: 'monthly',
+          billingInterval: 1,
+          hasTrial: false,
+          isActive: true,
+          metadata: {
+            features: ['courses', 'ebooks', 'community_access'],
+            limitations: ['limited_downloads'],
+            targetAudience: 'spiritual_seekers',
+          },
+        },
+        {
+          productId: holymindLifetimeProduct.id,
+          name: 'Holymind Lifetime',
+          slug: 'holymind-lifetime-offer',
+          description: 'Acesso vitalício à plataforma Holymind',
+          billingType: 'one_time',
+          billingPeriod: null,
+          billingInterval: 1,
+          hasTrial: false,
+          isActive: true,
+          metadata: {
+            features: ['unlimited_access', 'premium_content', 'meditation_sessions', 'exclusive_content', 'lifetime_updates'],
+            limitations: [],
+            targetAudience: 'lifetime_committed_users',
+            isLifetime: true,
+          },
+        },
+        {
+          productId: premiumSupportProduct.id,
+          name: 'Premium Support Mensal',
+          slug: 'premium-support-mensal',
+          description: 'Suporte premium mensal',
+          billingType: 'recurring',
+          billingPeriod: 'monthly',
+          billingInterval: 1,
+          hasTrial: false,
+          isActive: true,
+          metadata: {
+            features: ['priority_support', 'dedicated_manager', 'phone_support', 'email_support'],
+            limitations: [],
+            targetAudience: 'premium_customers',
+            supportLevel: 'premium',
+          },
+        },
+      ];
+
+      for (const offer of offers) {
+        await prisma.offer.upsert({
+          where: {
+            productId_slug: {
+              productId: offer.productId,
+              slug: offer.slug,
+            },
+          },
+          update: {},
+          create: offer,
+        });
+      }
+
+      console.log('✅ Offers created');
+    } else {
+      console.log('⚠️ Some products not found, skipping offers creation');
+    }
 
     // ============================================
     // SUMMARY
@@ -254,6 +500,9 @@ async function main() {
         permissions: await prisma.permission.count(),
         roles: await prisma.role.count(),
         users: await prisma.user.count(),
+        platforms: await prisma.platform.count(),
+        products: await prisma.product.count(),
+        offers: await prisma.offer.count(),
     };
 
     console.log('📊 Seed Summary:');
@@ -262,6 +511,9 @@ async function main() {
     console.log(`   Permissions: ${stats.permissions}`);
     console.log(`   Roles: ${stats.roles}`);
     console.log(`   Users: ${stats.users}`);
+    console.log(`   Platforms: ${stats.platforms}`);
+    console.log(`   Products: ${stats.products}`);
+    console.log(`   Offers: ${stats.offers}`);
     console.log('');
     console.log('✅ Seed completed successfully!');
 }

@@ -164,3 +164,109 @@ model PermissionAuditLog {
   @@index([createdAt])
   @@map("permission_audit_logs")
 }
+
+// ============================================
+// PHASE 2: PRODUCTS CATALOG
+// ============================================
+
+model Platform {
+  id        String  @id @default(uuid())
+  name      String
+  slug      String  @unique
+  isEnabled Boolean @default(true) @map("is_enabled")
+  config    Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  offerPlatformMappings OfferPlatformMapping[]
+
+  @@index([slug])
+  @@index([isEnabled])
+  @@map("platforms")
+}
+
+model Product {
+  id           String  @id @default(uuid())
+  name         String
+  slug         String  @unique
+  description  String?
+  productType  String  @map("product_type")
+  isActive     Boolean @default(true) @map("is_active")
+  metadata     Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  offers Offer[]
+
+  @@index([slug])
+  @@index([productType])
+  @@index([isActive])
+  @@map("products")
+}
+
+model Offer {
+  id               String  @id @default(uuid())
+  productId        String  @map("product_id")
+  name             String
+  slug             String
+  description      String?
+  
+  billingType      String  @map("billing_type")
+  billingPeriod    String? @map("billing_period")
+  billingInterval  Int     @default(1) @map("billing_interval")
+  
+  hasTrial         Boolean @default(false) @map("has_trial")
+  trialPeriodDays  Int?    @map("trial_period_days")
+  trialAmount      Decimal? @map("trial_amount") @db.Decimal(10, 2)
+  
+  isActive         Boolean @default(true) @map("is_active")
+  metadata         Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product             Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  offerPlatformMappings OfferPlatformMapping[]
+
+  @@unique([productId, slug])
+  @@index([productId])
+  @@index([isActive])
+  @@map("offers")
+}
+
+model OfferPlatformMapping {
+  id                String  @id @default(uuid())
+  offerId           String  @map("offer_id")
+  platformId        String  @map("platform_id")
+  
+  externalProductId String  @map("external_product_id")
+  externalPriceId   String? @map("external_price_id")
+  
+  priceAmount       Decimal @map("price_amount") @db.Decimal(10, 2)
+  priceCurrency     String  @map("price_currency")
+  
+  priceAmountBrl    Decimal? @map("price_amount_brl") @db.Decimal(10, 2)
+  priceAmountUsd    Decimal? @map("price_amount_usd") @db.Decimal(10, 2)
+  
+  trialAmount       Decimal? @map("trial_amount") @db.Decimal(10, 2)
+  trialCurrency     String?  @map("trial_currency")
+  trialAmountBrl    Decimal? @map("trial_amount_brl") @db.Decimal(10, 2)
+  trialAmountUsd    Decimal? @map("trial_amount_usd") @db.Decimal(10, 2)
+  
+  isActive          Boolean @default(true) @map("is_active")
+  metadata          Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  offer    Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  platform Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  @@unique([platformId, externalProductId])
+  @@index([offerId])
+  @@index([platformId])
+  @@index([platformId, externalProductId])
+  @@map("offer_platform_mappings")
+}
