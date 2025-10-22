@@ -25,6 +25,9 @@ model User {
   userRoles     UserRole[]
   refreshTokens RefreshToken[]
   auditLogs     PermissionAuditLog[]
+  auditLogsCreated AuditLog[]
+  acknowledgedAlerts AuditAlert[] @relation("AcknowledgedBy")
+  resolvedAlerts AuditAlert[] @relation("ResolvedBy")
 
   @@map("users")
 }
@@ -179,7 +182,18 @@ model Platform {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  offerPlatformMappings OfferPlatformMapping[]
+  offerPlatformMappings  OfferPlatformMapping[]
+  integrationCredentials IntegrationCredential[]
+  webhookEvents          WebhookEvent[]
+  customers              Customer[]
+  orders                 Order[]
+  subscriptions          Subscription[]
+  transactions           Transaction[]
+  dailyMetrics           DailyMetrics[]
+  cohortAnalysis         CohortAnalysis[]
+  affiliateMetrics       AffiliateMetrics[]
+  affiliates             Affiliate[]
+  syncLogs               SyncLog[]
 
   @@index([slug])
   @@index([isEnabled])
@@ -187,18 +201,22 @@ model Platform {
 }
 
 model Product {
-  id           String  @id @default(uuid())
-  name         String
-  slug         String  @unique
-  description  String?
-  productType  String  @map("product_type")
-  isActive     Boolean @default(true) @map("is_active")
-  metadata     Json?
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  productType String  @map("product_type")
+  isActive    Boolean @default(true) @map("is_active")
+  metadata    Json?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  offers Offer[]
+  offers          Offer[]
+  subscriptions   Subscription[]
+  orderItems      OrderItem[]
+  dailyMetrics    DailyMetrics[]
+  cohortAnalysis  CohortAnalysis[]
 
   @@index([slug])
   @@index([productType])
@@ -207,28 +225,30 @@ model Product {
 }
 
 model Offer {
-  id               String  @id @default(uuid())
-  productId        String  @map("product_id")
-  name             String
-  slug             String
-  description      String?
-  
-  billingType      String  @map("billing_type")
-  billingPeriod    String? @map("billing_period")
-  billingInterval  Int     @default(1) @map("billing_interval")
-  
-  hasTrial         Boolean @default(false) @map("has_trial")
-  trialPeriodDays  Int?    @map("trial_period_days")
-  trialAmount      Decimal? @map("trial_amount") @db.Decimal(10, 2)
-  
-  isActive         Boolean @default(true) @map("is_active")
-  metadata         Json?
+  id          String  @id @default(uuid())
+  productId   String  @map("product_id")
+  name        String
+  slug        String
+  description String?
+
+  billingType     String  @map("billing_type")
+  billingPeriod   String? @map("billing_period")
+  billingInterval Int     @default(1) @map("billing_interval")
+
+  hasTrial        Boolean  @default(false) @map("has_trial")
+  trialPeriodDays Int?     @map("trial_period_days")
+  trialAmount     Decimal? @map("trial_amount") @db.Decimal(10, 2)
+
+  isActive Boolean @default(true) @map("is_active")
+  metadata Json?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  product             Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product               Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
   offerPlatformMappings OfferPlatformMapping[]
+  subscriptions         Subscription[]
+  orderItems            OrderItem[]
 
   @@unique([productId, slug])
   @@index([productId])
@@ -237,26 +257,26 @@ model Offer {
 }
 
 model OfferPlatformMapping {
-  id                String  @id @default(uuid())
-  offerId           String  @map("offer_id")
-  platformId        String  @map("platform_id")
-  
+  id         String @id @default(uuid())
+  offerId    String @map("offer_id")
+  platformId String @map("platform_id")
+
   externalProductId String  @map("external_product_id")
   externalPriceId   String? @map("external_price_id")
-  
-  priceAmount       Decimal @map("price_amount") @db.Decimal(10, 2)
-  priceCurrency     String  @map("price_currency")
-  
-  priceAmountBrl    Decimal? @map("price_amount_brl") @db.Decimal(10, 2)
-  priceAmountUsd    Decimal? @map("price_amount_usd") @db.Decimal(10, 2)
-  
-  trialAmount       Decimal? @map("trial_amount") @db.Decimal(10, 2)
-  trialCurrency     String?  @map("trial_currency")
-  trialAmountBrl    Decimal? @map("trial_amount_brl") @db.Decimal(10, 2)
-  trialAmountUsd    Decimal? @map("trial_amount_usd") @db.Decimal(10, 2)
-  
-  isActive          Boolean @default(true) @map("is_active")
-  metadata          Json?
+
+  priceAmount   Decimal @map("price_amount") @db.Decimal(10, 2)
+  priceCurrency String  @map("price_currency")
+
+  priceAmountBrl Decimal? @map("price_amount_brl") @db.Decimal(10, 2)
+  priceAmountUsd Decimal? @map("price_amount_usd") @db.Decimal(10, 2)
+
+  trialAmount    Decimal? @map("trial_amount") @db.Decimal(10, 2)
+  trialCurrency  String?  @map("trial_currency")
+  trialAmountBrl Decimal? @map("trial_amount_brl") @db.Decimal(10, 2)
+  trialAmountUsd Decimal? @map("trial_amount_usd") @db.Decimal(10, 2)
+
+  isActive Boolean @default(true) @map("is_active")
+  metadata Json?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -269,4 +289,609 @@ model OfferPlatformMapping {
   @@index([platformId])
   @@index([platformId, externalProductId])
   @@map("offer_platform_mappings")
+}
+
+// ============================================
+// PHASE 3: INTEGRATION INFRASTRUCTURE
+// ============================================
+
+model IntegrationCredential {
+  id String @id @default(uuid())
+
+  platformId String   @map("platform_id")
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  credentialType  String @map("credential_type")
+  credentialValue String @map("credential_value") @db.Text
+
+  environment String @default("production")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  expiresAt DateTime? @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([platformId, credentialType, environment], name: "unique_platform_credential")
+  @@index([platformId, isActive])
+  @@map("integration_credentials")
+}
+
+model WebhookEvent {
+  id String @id @default(uuid())
+
+  platformId String   @map("platform_id")
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  eventType       String @map("event_type")
+  externalEventId String @map("external_event_id")
+
+  payload   Json
+  signature String?
+
+  status       String    @default("pending")
+  processedAt  DateTime? @map("processed_at")
+  errorMessage String?   @map("error_message") @db.Text
+  retryCount   Int       @default(0) @map("retry_count")
+
+  receivedAt DateTime @default(now()) @map("received_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([platformId, externalEventId], name: "unique_platform_event")
+  @@index([platformId, status, receivedAt])
+  @@index([eventType])
+  @@map("webhook_events")
+}
+
+// ============================================
+// PHASE 4: CORE BUSINESS
+// ============================================
+
+model Customer {
+  id                   String   @id @default(uuid())
+  platformId           String   @map("platform_id")
+  platform             Platform @relation(fields: [platformId], references: [id])
+  
+  externalCustomerId   String   @map("external_customer_id") @db.VarChar(255)
+  
+  email                String   @db.VarChar(255)
+  name                 String?  @db.VarChar(255)
+  phone                String?  @db.VarChar(50)
+  document             String?  @db.VarChar(50)
+  documentType         String?  @map("document_type") @db.VarChar(20)
+  
+  countryCode          String?  @map("country_code") @db.VarChar(2)
+  state                String?  @db.VarChar(100)
+  city                 String?  @db.VarChar(100)
+  
+  metadata             Json?    @db.JsonB
+  
+  firstPurchaseAt      DateTime? @map("first_purchase_at") @db.Timestamp
+  lastPurchaseAt       DateTime? @map("last_purchase_at") @db.Timestamp
+  totalSpentBrl        Decimal   @default(0) @map("total_spent_brl") @db.Decimal(10, 2)
+  
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamp
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamp
+  
+  orders               Order[]
+  subscriptions        Subscription[]
+  transactions         Transaction[]
+  
+  @@unique([platformId, externalCustomerId], name: "unique_platform_customer")
+  @@index([platformId, externalCustomerId], name: "idx_customers_platform_external")
+  @@index([email], name: "idx_customers_email")
+  @@map("customers")
+}
+
+model Order {
+  id                   String   @id @default(uuid())
+  customerId           String   @map("customer_id")
+  customer             Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  platformId           String   @map("platform_id")
+  platform             Platform @relation(fields: [platformId], references: [id])
+  
+  externalOrderId      String   @map("external_order_id") @db.VarChar(255)
+  
+  subtotalAmount       Decimal  @map("subtotal_amount") @db.Decimal(10, 2)
+  discountAmount       Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  taxAmount            Decimal  @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  totalAmount          Decimal  @map("total_amount") @db.Decimal(10, 2)
+  currency             String   @db.VarChar(3)
+  
+  subtotalAmountBrl    Decimal  @map("subtotal_amount_brl") @db.Decimal(10, 2)
+  discountAmountBrl    Decimal  @default(0) @map("discount_amount_brl") @db.Decimal(10, 2)
+  taxAmountBrl         Decimal  @default(0) @map("tax_amount_brl") @db.Decimal(10, 2)
+  totalAmountBrl       Decimal  @map("total_amount_brl") @db.Decimal(10, 2)
+  
+  subtotalAmountUsd    Decimal  @map("subtotal_amount_usd") @db.Decimal(10, 2)
+  discountAmountUsd    Decimal  @default(0) @map("discount_amount_usd") @db.Decimal(10, 2)
+  taxAmountUsd         Decimal  @default(0) @map("tax_amount_usd") @db.Decimal(10, 2)
+  totalAmountUsd       Decimal  @map("total_amount_usd") @db.Decimal(10, 2)
+  
+  exchangeRate         Decimal? @map("exchange_rate") @db.Decimal(10, 6)
+  
+  utmSource            String?  @map("utm_source") @db.VarChar(255)
+  utmMedium            String?  @map("utm_medium") @db.VarChar(255)
+  utmCampaign          String?  @map("utm_campaign") @db.VarChar(255)
+  utmTerm              String?  @map("utm_term") @db.VarChar(255)
+  utmContent           String?  @map("utm_content") @db.VarChar(255)
+  
+  referrerUrl          String?  @map("referrer_url") @db.Text
+  landingPageUrl       String?  @map("landing_page_url") @db.Text
+  
+  affiliateId          String?  @map("affiliate_id")
+  affiliate            Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
+  couponCode           String?  @map("coupon_code") @db.VarChar(100)
+  
+  status               String   @db.VarChar(50)
+  platformMetadata     Json?    @map("platform_metadata") @db.JsonB
+  
+  orderDate            DateTime @map("order_date") @db.Timestamp
+  completedAt          DateTime? @map("completed_at") @db.Timestamp
+  
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamp
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp
+  
+  items                OrderItem[]
+  subscriptions        Subscription[]
+  transactions         Transaction[]
+  
+  @@unique([platformId, externalOrderId], name: "unique_platform_order")
+  @@index([customerId], name: "idx_orders_customer")
+  @@index([platformId], name: "idx_orders_platform")
+  @@index([status], name: "idx_orders_status")
+  @@index([orderDate], name: "idx_orders_date")
+  @@map("orders")
+}
+
+model OrderItem {
+  id                   String   @id @default(uuid())
+  orderId              String   @map("order_id")
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId            String?  @map("product_id")
+  product              Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  offerId              String?  @map("offer_id")
+  offer                Offer?   @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  
+  externalProductId    String   @map("external_product_id") @db.VarChar(255)
+  
+  itemType             String   @map("item_type") @db.VarChar(50)
+  
+  productName          String   @map("product_name") @db.VarChar(255)
+  
+  price                Decimal  @db.Decimal(10, 2)
+  quantity             Int      @default(1)
+  discountAmount       Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  subtotal             Decimal  @db.Decimal(10, 2)
+  currency             String   @db.VarChar(3)
+  
+  priceBrl             Decimal  @map("price_brl") @db.Decimal(10, 2)
+  discountAmountBrl    Decimal  @default(0) @map("discount_amount_brl") @db.Decimal(10, 2)
+  subtotalBrl          Decimal  @map("subtotal_brl") @db.Decimal(10, 2)
+  
+  priceUsd             Decimal  @map("price_usd") @db.Decimal(10, 2)
+  discountAmountUsd    Decimal  @default(0) @map("discount_amount_usd") @db.Decimal(10, 2)
+  subtotalUsd          Decimal  @map("subtotal_usd") @db.Decimal(10, 2)
+  
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamp
+  
+  @@index([orderId], name: "idx_order_items_order")
+  @@index([productId], name: "idx_order_items_product")
+  @@map("order_items")
+}
+
+model Subscription {
+  id                      String   @id @default(uuid())
+  customerId              String   @map("customer_id")
+  customer                Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  productId               String   @map("product_id")
+  product                 Product  @relation(fields: [productId], references: [id])
+  
+  offerId                 String?  @map("offer_id")
+  offer                   Offer?   @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  
+  platformId              String   @map("platform_id")
+  platform                Platform @relation(fields: [platformId], references: [id])
+  
+  orderId                 String?  @map("order_id")
+  order                   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
+  externalSubscriptionId  String   @map("external_subscription_id") @db.VarChar(255)
+  externalCustomerId      String   @map("external_customer_id") @db.VarChar(255)
+  externalProductId       String   @map("external_product_id") @db.VarChar(255)
+  
+  status                  String   @db.VarChar(50)
+  
+  isTrial                 Boolean  @default(false) @map("is_trial")
+  trialStart              DateTime? @map("trial_start") @db.Timestamp
+  trialEnd                DateTime? @map("trial_end") @db.Timestamp
+  trialEndsAt             DateTime? @map("trial_ends_at") @db.Timestamp
+  
+  recurringAmount         Decimal  @map("recurring_amount") @db.Decimal(10, 2)
+  currency                String   @db.VarChar(3)
+  recurringAmountBrl      Decimal  @map("recurring_amount_brl") @db.Decimal(10, 2)
+  recurringAmountUsd      Decimal  @map("recurring_amount_usd") @db.Decimal(10, 2)
+  exchangeRate            Decimal? @map("exchange_rate") @db.Decimal(10, 6)
+  
+  billingPeriod           String   @map("billing_period") @db.VarChar(20)
+  billingCycles           Int?     @map("billing_cycles")
+  
+  startDate               DateTime @map("start_date") @db.Timestamp
+  nextBillingDate         DateTime? @map("next_billing_date") @db.Timestamp
+  currentPeriodStart      DateTime? @map("current_period_start") @db.Timestamp
+  currentPeriodEnd        DateTime? @map("current_period_end") @db.Timestamp
+  
+  canceledAt              DateTime? @map("canceled_at") @db.Timestamp
+  cancellationReason      String?   @map("cancellation_reason") @db.Text
+  canceledBy              String?   @map("canceled_by") @db.VarChar(50)
+  
+  pausedAt                DateTime? @map("paused_at") @db.Timestamp
+  resumedAt               DateTime? @map("resumed_at") @db.Timestamp
+  
+  endedAt                 DateTime? @map("ended_at") @db.Timestamp
+  
+  affiliateId             String?   @map("affiliate_id")
+  affiliate               Affiliate? @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
+  
+  platformMetadata        Json?     @map("platform_metadata") @db.JsonB
+  
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamp
+  updatedAt               DateTime  @updatedAt @map("updated_at") @db.Timestamp
+  
+  periods                 SubscriptionPeriod[]
+  transactionSubscriptions TransactionSubscription[]
+  
+  @@unique([platformId, externalSubscriptionId], name: "unique_platform_subscription")
+  @@index([customerId], name: "idx_subscriptions_customer")
+  @@index([productId], name: "idx_subscriptions_product")
+  @@index([platformId], name: "idx_subscriptions_platform")
+  @@index([status], name: "idx_subscriptions_status")
+  @@index([nextBillingDate], name: "idx_subscriptions_next_billing")
+  @@map("subscriptions")
+}
+
+model Transaction {
+  id                      String   @id @default(uuid())
+  orderId                 String?  @map("order_id")
+  order                   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
+  customerId              String   @map("customer_id")
+  customer                Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  platformId              String   @map("platform_id")
+  platform                Platform @relation(fields: [platformId], references: [id])
+  
+  externalTransactionId   String   @map("external_transaction_id") @db.VarChar(255)
+  externalInvoiceId       String?  @map("external_invoice_id") @db.VarChar(255)
+  
+  transactionType         String   @map("transaction_type") @db.VarChar(50)
+  status                  String   @db.VarChar(50)
+  
+  grossAmount             Decimal  @map("gross_amount") @db.Decimal(10, 2)
+  discountAmount          Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  taxAmount               Decimal  @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  feeAmount               Decimal  @default(0) @map("fee_amount") @db.Decimal(10, 2)
+  netAmount               Decimal  @map("net_amount") @db.Decimal(10, 2)
+  currency                String   @db.VarChar(3)
+  
+  grossAmountBrl          Decimal  @map("gross_amount_brl") @db.Decimal(10, 2)
+  discountAmountBrl       Decimal  @default(0) @map("discount_amount_brl") @db.Decimal(10, 2)
+  taxAmountBrl            Decimal  @default(0) @map("tax_amount_brl") @db.Decimal(10, 2)
+  feeAmountBrl            Decimal  @default(0) @map("fee_amount_brl") @db.Decimal(10, 2)
+  netAmountBrl            Decimal  @map("net_amount_brl") @db.Decimal(10, 2)
+  
+  grossAmountUsd          Decimal  @map("gross_amount_usd") @db.Decimal(10, 2)
+  discountAmountUsd       Decimal  @default(0) @map("discount_amount_usd") @db.Decimal(10, 2)
+  taxAmountUsd            Decimal  @default(0) @map("tax_amount_usd") @db.Decimal(10, 2)
+  feeAmountUsd            Decimal  @default(0) @map("fee_amount_usd") @db.Decimal(10, 2)
+  netAmountUsd            Decimal  @map("net_amount_usd") @db.Decimal(10, 2)
+  
+  exchangeRate            Decimal? @map("exchange_rate") @db.Decimal(10, 6)
+  
+  paymentMethod           String?  @map("payment_method") @db.VarChar(100)
+  paymentMethodDetails    Json?    @map("payment_method_details") @db.JsonB
+  
+  failureCode             String?  @map("failure_code") @db.VarChar(100)
+  failureMessage          String?  @map("failure_message") @db.Text
+  
+  platformMetadata        Json?    @map("platform_metadata") @db.JsonB
+  
+  transactionDate         DateTime @map("transaction_date") @db.Timestamp
+  
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamp
+  
+  transactionSubscriptions TransactionSubscription[]
+  
+  @@unique([platformId, externalTransactionId], name: "unique_platform_transaction")
+  @@index([orderId], name: "idx_transactions_order")
+  @@index([customerId], name: "idx_transactions_customer")
+  @@index([platformId], name: "idx_transactions_platform")
+  @@index([status], name: "idx_transactions_status")
+  @@index([transactionType], name: "idx_transactions_type")
+  @@index([transactionDate], name: "idx_transactions_date")
+  @@map("transactions")
+}
+
+model TransactionSubscription {
+  id                   String       @id @default(uuid())
+  transactionId        String       @map("transaction_id")
+  transaction          Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  
+  subscriptionId       String       @map("subscription_id")
+  subscription         Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  amountAllocatedBrl   Decimal      @map("amount_allocated_brl") @db.Decimal(10, 2)
+  
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamp
+  
+  @@unique([transactionId, subscriptionId], name: "unique_transaction_subscription")
+  @@index([transactionId], name: "idx_trans_sub_transaction")
+  @@index([subscriptionId], name: "idx_trans_sub_subscription")
+  @@map("transaction_subscriptions")
+}
+
+model SubscriptionPeriod {
+  id                   String        @id @default(uuid())
+  subscriptionId       String        @map("subscription_id")
+  subscription         Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  periodNumber         Int           @map("period_number")
+  
+  periodStart          DateTime      @map("period_start") @db.Timestamp
+  periodEnd            DateTime      @map("period_end") @db.Timestamp
+  
+  expectedAmountBrl    Decimal       @map("expected_amount_brl") @db.Decimal(10, 2)
+  actualAmountBrl      Decimal?      @map("actual_amount_brl") @db.Decimal(10, 2)
+  
+  paymentStatus        String        @map("payment_status") @db.VarChar(50)
+  paymentDate          DateTime?     @map("payment_date") @db.Timestamp
+  
+  transactionId        String?       @map("transaction_id")
+  
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamp
+  
+  @@unique([subscriptionId, periodNumber], name: "unique_subscription_period")
+  @@index([subscriptionId], name: "idx_sub_periods_subscription")
+  @@index([periodStart, periodEnd], name: "idx_sub_periods_dates")
+  @@map("subscription_periods")
+}
+
+model DailyMetrics {
+  id                String   @id @default(uuid())
+  metricDate        DateTime @map("metric_date")
+  platformId        String?  @map("platform_id")
+  productId         String?  @map("product_id")
+  
+  platform          Platform? @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  product           Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  mrrBrl            Decimal  @map("mrr_brl") @default(0)
+  mrrUsd            Decimal  @map("mrr_usd") @default(0)
+  arrBrl            Decimal  @map("arr_brl") @default(0)
+  arrUsd            Decimal  @map("arr_usd") @default(0)
+  
+  activeSubscriptionsCount    Int @map("active_subscriptions_count") @default(0)
+  trialSubscriptionsCount     Int @map("trial_subscriptions_count") @default(0)
+  canceledSubscriptionsCount  Int @map("canceled_subscriptions_count") @default(0)
+  newSubscriptionsCount       Int @map("new_subscriptions_count") @default(0)
+  
+  churnCount        Int @map("churn_count") @default(0)
+  churnRate         Decimal @map("churn_rate") @default(0)
+  
+  revenueBrl        Decimal @map("revenue_brl") @default(0)
+  revenueUsd        Decimal @map("revenue_usd") @default(0)
+  refundsBrl        Decimal @map("refunds_brl") @default(0)
+  refundsUsd        Decimal @map("refunds_usd") @default(0)
+  
+  newCustomersCount Int @map("new_customers_count") @default(0)
+  totalCustomersCount Int @map("total_customers_count") @default(0)
+  
+  averageRevenuePerUserBrl Decimal @map("arpu_brl") @default(0)
+  averageRevenuePerUserUsd Decimal @map("arpu_usd") @default(0)
+  
+  customerLifetimeValueBrl Decimal @map("clv_brl") @default(0)
+  customerLifetimeValueUsd Decimal @map("clv_usd") @default(0)
+  
+  trialConversionRate Decimal @map("trial_conversion_rate") @default(0)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([metricDate, platformId, productId])
+  @@index([metricDate])
+  @@index([platformId])
+  @@index([productId])
+  @@map("daily_metrics")
+}
+
+model CohortAnalysis {
+  id                String   @id @default(uuid())
+  cohortDate        DateTime @map("cohort_date")
+  platformId        String?  @map("platform_id")
+  productId         String?  @map("product_id")
+  
+  platform          Platform? @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  product           Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  period            Int
+  customersCount    Int @map("customers_count") @default(0)
+  retainedCount     Int @map("retained_count") @default(0)
+  retentionRate     Decimal @map("retention_rate") @default(0)
+  
+  revenueBrl        Decimal @map("revenue_brl") @default(0)
+  revenueUsd        Decimal @map("revenue_usd") @default(0)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([cohortDate, platformId, productId, period])
+  @@index([cohortDate])
+  @@index([platformId])
+  @@index([productId])
+  @@map("cohort_analysis")
+}
+
+model Affiliate {
+  id                String   @id @default(uuid())
+  platformId        String   @map("platform_id")
+  externalAffiliateId String @map("external_affiliate_id")
+  
+  platform          Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  
+  name              String
+  email             String
+  phone             String?
+  tier              String   @default("bronze")
+  commissionRate    Decimal? @map("commission_rate")
+  
+  instagramHandle   String?  @map("instagram_handle")
+  youtubeHandle     String?  @map("youtube_handle")
+  tiktokHandle      String?  @map("tiktok_handle")
+  twitterHandle     String?  @map("twitter_handle")
+  
+  totalSalesCount   Int      @map("total_sales_count") @default(0)
+  totalRevenueBrl   Decimal  @map("total_revenue_brl") @default(0)
+  totalRevenueUsd   Decimal  @map("total_revenue_usd") @default(0)
+  
+  firstSaleAt       DateTime? @map("first_sale_at")
+  lastSaleAt        DateTime? @map("last_sale_at")
+  
+  isActive          Boolean  @map("is_active") @default(true)
+  metadata          Json?
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orders            Order[]
+  subscriptions     Subscription[]
+
+  @@unique([platformId, externalAffiliateId])
+  @@index([platformId])
+  @@index([tier])
+  @@index([isActive])
+  @@index([totalRevenueBrl])
+  @@map("affiliates")
+}
+
+model AffiliateMetrics {
+  id                String   @id @default(uuid())
+  affiliateId       String   @map("affiliate_id")
+  metricDate        DateTime @map("metric_date")
+  platformId        String?  @map("platform_id")
+  
+  platform          Platform? @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  
+  salesCount        Int @map("sales_count") @default(0)
+  revenueBrl        Decimal @map("revenue_brl") @default(0)
+  revenueUsd        Decimal @map("revenue_usd") @default(0)
+  conversionRate    Decimal @map("conversion_rate") @default(0)
+  
+  newCustomersCount Int @map("new_customers_count") @default(0)
+  repeatCustomersCount Int @map("repeat_customers_count") @default(0)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([affiliateId, metricDate, platformId])
+  @@index([affiliateId])
+  @@index([metricDate])
+  @@index([platformId])
+  @@map("affiliate_metrics")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action        String   @db.VarChar(50)
+  resource      String   @db.VarChar(100)
+  resourceId    String?  @map("resource_id")
+  description   String?  @db.Text
+  
+  level         String   @db.VarChar(20)
+  status        String   @db.VarChar(20)
+  
+  ipAddress     String?  @map("ip_address") @db.VarChar(45)
+  userAgent     String?  @map("user_agent") @db.Text
+  metadata      Json?
+  errorMessage  String?  @map("error_message") @db.Text
+  executionTime Int?     @map("execution_time")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([level])
+  @@index([status])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AuditAlert {
+  id              String   @id @default(uuid())
+  
+  type            String   @db.VarChar(50)
+  severity        String   @db.VarChar(20)
+  status          String   @db.VarChar(20) @default("active")
+  
+  title           String   @db.VarChar(255)
+  description     String   @db.Text
+  resource        String?  @db.VarChar(100)
+  resourceId      String?  @map("resource_id")
+  metadata        Json?
+  
+  isActive        Boolean  @map("is_active") @default(true)
+  
+  acknowledgedBy  String?  @map("acknowledged_by")
+  acknowledgedByUser User? @relation("AcknowledgedBy", fields: [acknowledgedBy], references: [id], onDelete: SetNull)
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  
+  resolvedBy      String?  @map("resolved_by")
+  resolvedByUser  User?    @relation("ResolvedBy", fields: [resolvedBy], references: [id], onDelete: SetNull)
+  resolvedAt      DateTime? @map("resolved_at")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([severity])
+  @@index([status])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("audit_alerts")
+}
+
+model SyncLog {
+  id                  String   @id @default(uuid())
+  platformId         String   @map("platform_id")
+  platform           Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+  
+  syncType           String   @map("sync_type") @db.VarChar(50)
+  status             String   @db.VarChar(20)
+  
+  startedAt          DateTime @map("started_at")
+  completedAt        DateTime? @map("completed_at")
+  
+  recordsSynced      Int      @map("records_synced") @default(0)
+  recordsFailed      Int      @map("records_failed") @default(0)
+  missingRecordsFound Int     @map("missing_records_found") @default(0)
+  
+  errorDetails       Json?
+  
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@index([platformId])
+  @@index([syncType])
+  @@index([status])
+  @@index([startedAt])
+  @@map("sync_logs")
 }

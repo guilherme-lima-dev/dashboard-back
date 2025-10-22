@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { createBullBoard } from '@bull-board/api';
+import { ExpressAdapter } from '@bull-board/express';
+import type { Queue } from 'bull';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -78,10 +81,34 @@ async function bootstrap() {
     `,
     });
 
+    // Bull Board Setup
+    try {
+        const BullAdapter = require('@bull-board/api/bullAdapter').BullAdapter;
+        const webhooksQueue = app.get<Queue>('BullQueue_webhooks');
+
+        const serverAdapter = new ExpressAdapter();
+        serverAdapter.setBasePath('/admin/queues');
+
+        createBullBoard({
+            queues: [new BullAdapter(webhooksQueue)],
+            serverAdapter: serverAdapter,
+        });
+
+        app.use('/admin/queues', serverAdapter.getRouter());
+
+        console.log('📊 Bull Board configured successfully');
+    } catch (error) {
+        console.warn('⚠️  Bull Board setup failed:', error.message);
+        console.warn('   Continuing without queue dashboard...');
+    }
+
     const port = process.env.PORT || 4000;
     await app.listen(port);
 
-    console.log(`🚀 Application is running on: http://localhost:${port}`);
-    console.log(`📚 Swagger documentation available at: http://localhost:${port}/api/docs`);
+    console.log('');
+    console.log('🚀 Application is running on: http://localhost:' + port);
+    console.log('📚 Swagger documentation: http://localhost:' + port + '/api/docs');
+    console.log('📊 Bull Board: http://localhost:' + port + '/admin/queues');
+    console.log('');
 }
 bootstrap();

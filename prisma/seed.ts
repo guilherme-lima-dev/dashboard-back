@@ -48,6 +48,7 @@ async function main() {
         { name: 'Affiliates', slug: 'affiliates', description: 'Affiliate management' },
         { name: 'Analytics', slug: 'analytics', description: 'Analytics and reports' },
         { name: 'Integrations', slug: 'integrations', description: 'Platform integrations' },
+        { name: 'Sync', slug: 'sync', description: 'Synchronization jobs' },
         { name: 'Audit Logs', slug: 'audit-logs', description: 'System audit logs' },
     ];
 
@@ -492,6 +493,292 @@ async function main() {
     }
 
     // ============================================
+    // 10. CORE BUSINESS DATA (Phase 4)
+    // ============================================
+    console.log('👥 Creating customers...');
+
+    const stripePlatform = await prisma.platform.findFirst({ where: { slug: 'stripe' } });
+    const hotmartPlatform = await prisma.platform.findFirst({ where: { slug: 'hotmart' } });
+    const holymindProductCore = await prisma.product.findFirst({ where: { slug: 'holymind' } });
+    const holyguideProductCore = await prisma.product.findFirst({ where: { slug: 'holyguide' } });
+
+    if (stripePlatform && hotmartPlatform && holymindProductCore && holyguideProductCore) {
+      // Create test customers
+      const customers = [
+        {
+          platformId: stripePlatform.id,
+          externalCustomerId: 'cus_stripe_test_001',
+          email: 'joao.silva@example.com',
+          name: 'João Silva',
+          phone: '+5511999999999',
+          document: '12345678900',
+          documentType: 'cpf',
+          countryCode: 'BR',
+          state: 'SP',
+          city: 'São Paulo',
+          firstPurchaseAt: new Date('2024-01-15'),
+          lastPurchaseAt: new Date('2024-01-15'),
+          totalSpentBrl: 97.00,
+          metadata: {
+            source: 'website',
+            utm_campaign: 'summer_sale',
+            preferences: ['meditation', 'sleep'],
+          },
+        },
+        {
+          platformId: hotmartPlatform.id,
+          externalCustomerId: 'cus_hotmart_test_001',
+          email: 'maria.santos@example.com',
+          name: 'Maria Santos',
+          phone: '+5511888888888',
+          document: '98765432100',
+          documentType: 'cpf',
+          countryCode: 'BR',
+          state: 'RJ',
+          city: 'Rio de Janeiro',
+          firstPurchaseAt: new Date('2024-02-10'),
+          lastPurchaseAt: new Date('2024-02-10'),
+          totalSpentBrl: 197.00,
+          metadata: {
+            source: 'facebook_ads',
+            utm_campaign: 'spiritual_growth',
+            preferences: ['courses', 'ebooks'],
+          },
+        },
+      ];
+
+      for (const customerData of customers) {
+        await prisma.customer.upsert({
+          where: {
+            unique_platform_customer: {
+              platformId: customerData.platformId,
+              externalCustomerId: customerData.externalCustomerId,
+            },
+          },
+          update: {},
+          create: customerData,
+        });
+      }
+
+      console.log('✅ Customers created');
+
+      // Create test subscriptions
+      console.log('📋 Creating subscriptions...');
+
+      const joaoCustomer = await prisma.customer.findFirst({
+        where: { externalCustomerId: 'cus_stripe_test_001' },
+      });
+
+      const mariaCustomer = await prisma.customer.findFirst({
+        where: { externalCustomerId: 'cus_hotmart_test_001' },
+      });
+
+      if (joaoCustomer && mariaCustomer) {
+        const subscriptions = [
+          {
+            platformId: stripePlatform.id,
+            externalSubscriptionId: 'sub_stripe_test_001',
+            customerId: joaoCustomer.id,
+            productId: holymindProductCore.id,
+            externalCustomerId: joaoCustomer.externalCustomerId,
+            externalProductId: 'prod_holymind_stripe',
+            status: 'active',
+            isTrial: false,
+            recurringAmount: 29.90,
+            currency: 'BRL',
+            recurringAmountBrl: 29.90,
+            recurringAmountUsd: 5.98,
+            exchangeRate: 5.00,
+            billingPeriod: 'month',
+            billingCycles: null,
+            startDate: new Date('2024-01-15'),
+            nextBillingDate: new Date('2024-02-15'),
+            currentPeriodStart: new Date('2024-01-15'),
+            currentPeriodEnd: new Date('2024-02-15'),
+            platformMetadata: {
+              stripe_subscription_id: 'sub_stripe_test_001',
+              stripe_customer_id: 'cus_stripe_test_001',
+              stripe_price_id: 'price_holymind_monthly',
+            },
+          },
+          {
+            platformId: hotmartPlatform.id,
+            externalSubscriptionId: 'sub_hotmart_test_001',
+            customerId: mariaCustomer.id,
+            productId: holyguideProductCore.id,
+            externalCustomerId: mariaCustomer.externalCustomerId,
+            externalProductId: 'prod_holyguide_hotmart',
+            status: 'active',
+            isTrial: false,
+            recurringAmount: 49.90,
+            currency: 'BRL',
+            recurringAmountBrl: 49.90,
+            recurringAmountUsd: 9.98,
+            exchangeRate: 5.00,
+            billingPeriod: 'month',
+            billingCycles: null,
+            startDate: new Date('2024-02-10'),
+            nextBillingDate: new Date('2024-03-10'),
+            currentPeriodStart: new Date('2024-02-10'),
+            currentPeriodEnd: new Date('2024-03-10'),
+            platformMetadata: {
+              hotmart_subscription_id: 'sub_hotmart_test_001',
+              hotmart_customer_id: 'cus_hotmart_test_001',
+              hotmart_product_id: 'prod_holyguide_hotmart',
+            },
+          },
+        ];
+
+        for (const subscriptionData of subscriptions) {
+          await prisma.subscription.upsert({
+            where: {
+              unique_platform_subscription: {
+                platformId: subscriptionData.platformId,
+                externalSubscriptionId: subscriptionData.externalSubscriptionId,
+              },
+            },
+            update: {},
+            create: subscriptionData,
+          });
+        }
+
+        console.log('✅ Subscriptions created');
+
+        // Create test transactions
+        console.log('💳 Creating transactions...');
+
+        const joaoSubscription = await prisma.subscription.findFirst({
+          where: { externalSubscriptionId: 'sub_stripe_test_001' },
+        });
+
+        const mariaSubscription = await prisma.subscription.findFirst({
+          where: { externalSubscriptionId: 'sub_hotmart_test_001' },
+        });
+
+        if (joaoSubscription && mariaSubscription) {
+          const transactions = [
+            {
+              platformId: stripePlatform.id,
+              externalTransactionId: 'txn_stripe_test_001',
+              externalInvoiceId: 'inv_stripe_test_001',
+              customerId: joaoCustomer.id,
+              transactionType: 'payment',
+              status: 'succeeded',
+              grossAmount: 29.90,
+              discountAmount: 0,
+              taxAmount: 0,
+              feeAmount: 1.50,
+              netAmount: 28.40,
+              currency: 'BRL',
+              grossAmountBrl: 29.90,
+              discountAmountBrl: 0,
+              taxAmountBrl: 0,
+              feeAmountBrl: 1.50,
+              netAmountBrl: 28.40,
+              grossAmountUsd: 5.98,
+              discountAmountUsd: 0,
+              taxAmountUsd: 0,
+              feeAmountUsd: 0.30,
+              netAmountUsd: 5.68,
+              exchangeRate: 5.00,
+              paymentMethod: 'credit_card',
+              paymentMethodDetails: {
+                card_brand: 'visa',
+                card_last4: '4242',
+                card_exp_month: 12,
+                card_exp_year: 2025,
+              },
+              transactionDate: new Date('2024-01-15T10:30:00Z'),
+              platformMetadata: {
+                stripe_payment_intent_id: 'pi_stripe_test_001',
+                stripe_charge_id: 'ch_stripe_test_001',
+              },
+            },
+            {
+              platformId: hotmartPlatform.id,
+              externalTransactionId: 'txn_hotmart_test_001',
+              externalInvoiceId: 'inv_hotmart_test_001',
+              customerId: mariaCustomer.id,
+              transactionType: 'payment',
+              status: 'succeeded',
+              grossAmount: 49.90,
+              discountAmount: 0,
+              taxAmount: 0,
+              feeAmount: 2.50,
+              netAmount: 47.40,
+              currency: 'BRL',
+              grossAmountBrl: 49.90,
+              discountAmountBrl: 0,
+              taxAmountBrl: 0,
+              feeAmountBrl: 2.50,
+              netAmountBrl: 47.40,
+              grossAmountUsd: 9.98,
+              discountAmountUsd: 0,
+              taxAmountUsd: 0,
+              feeAmountUsd: 0.50,
+              netAmountUsd: 9.48,
+              exchangeRate: 5.00,
+              paymentMethod: 'pix',
+              paymentMethodDetails: {
+                pix_type: 'static_qr_code',
+                pix_provider: 'hotmart',
+              },
+              transactionDate: new Date('2024-02-10T14:20:00Z'),
+              platformMetadata: {
+                hotmart_transaction_id: 'txn_hotmart_test_001',
+                hotmart_purchase_id: 'pur_hotmart_test_001',
+              },
+            },
+          ];
+
+          for (const transactionData of transactions) {
+            await prisma.transaction.upsert({
+              where: {
+                unique_platform_transaction: {
+                  platformId: transactionData.platformId,
+                  externalTransactionId: transactionData.externalTransactionId,
+                },
+              },
+              update: {},
+              create: transactionData,
+            });
+          }
+
+          // Link transactions to subscriptions
+          const joaoTransaction = await prisma.transaction.findFirst({
+            where: { externalTransactionId: 'txn_stripe_test_001' },
+          });
+
+          const mariaTransaction = await prisma.transaction.findFirst({
+            where: { externalTransactionId: 'txn_hotmart_test_001' },
+          });
+
+          if (joaoTransaction && mariaTransaction) {
+            await prisma.transactionSubscription.create({
+              data: {
+                transactionId: joaoTransaction.id,
+                subscriptionId: joaoSubscription.id,
+                amountAllocatedBrl: 28.40,
+              },
+            });
+
+            await prisma.transactionSubscription.create({
+              data: {
+                transactionId: mariaTransaction.id,
+                subscriptionId: mariaSubscription.id,
+                amountAllocatedBrl: 47.40,
+              },
+            });
+          }
+
+          console.log('✅ Transactions created');
+        }
+      }
+    } else {
+      console.log('⚠️ Required platforms or products not found, skipping core business data creation');
+    }
+
+    // ============================================
     // SUMMARY
     // ============================================
     const stats = {
@@ -503,6 +790,10 @@ async function main() {
         platforms: await prisma.platform.count(),
         products: await prisma.product.count(),
         offers: await prisma.offer.count(),
+        customers: await prisma.customer.count(),
+        subscriptions: await prisma.subscription.count(),
+        transactions: await prisma.transaction.count(),
+        orders: await prisma.order.count(),
     };
 
     console.log('📊 Seed Summary:');
@@ -514,6 +805,10 @@ async function main() {
     console.log(`   Platforms: ${stats.platforms}`);
     console.log(`   Products: ${stats.products}`);
     console.log(`   Offers: ${stats.offers}`);
+    console.log(`   Customers: ${stats.customers}`);
+    console.log(`   Subscriptions: ${stats.subscriptions}`);
+    console.log(`   Transactions: ${stats.transactions}`);
+    console.log(`   Orders: ${stats.orders}`);
     console.log('');
     console.log('✅ Seed completed successfully!');
 }
