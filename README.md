@@ -1,98 +1,310 @@
+# Analytics Platform API
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <strong>Plataforma completa de analytics para assinaturas com integração de múltiplas plataformas de pagamento</strong>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<p align="center">
+  <a href="https://nestjs.com/" target="_blank">NestJS</a> • 
+  <a href="https://www.prisma.io/" target="_blank">Prisma</a> • 
+  <a href="https://stripe.com/" target="_blank">Stripe</a> • 
+  <a href="https://www.hotmart.com/" target="_blank">Hotmart</a> • 
+  <a href="https://cartpanda.com/" target="_blank">Cartpanda</a>
+</p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🚀 Visão Geral
 
-## Project setup
+A **Analytics Platform API** é uma solução completa para análise de dados de assinaturas, oferecendo:
+
+- **Integração Multi-Plataforma**: Stripe, Hotmart, Cartpanda
+- **Analytics Avançados**: Métricas, relatórios e dashboards
+- **Sistema de Afiliados**: Gestão completa de afiliados e comissões
+- **Auditoria Completa**: Logs de atividades e alertas
+- **Sincronização Automática**: Reconciliação de dados entre plataformas
+- **Webhooks em Tempo Real**: Processamento instantâneo de eventos
+
+## 📋 Fases Implementadas
+
+### ✅ **Fase 1: Autenticação e Autorização**
+- Sistema JWT com refresh tokens
+- Controle de permissões granular
+- Middleware de autenticação
+
+### ✅ **Fase 2: Catálogo de Produtos**
+- Gestão de plataformas (Stripe, Hotmart, Cartpanda)
+- Catálogo de produtos e ofertas
+- Mapeamento produto-plataforma
+
+### ✅ **Fase 3: Infraestrutura de Integração**
+- Sistema de webhooks para todas as plataformas
+- Credenciais criptografadas
+- Providers de pagamento
+
+### ✅ **Fase 4: Core Business**
+- Gestão de clientes, assinaturas e transações
+- Processamento de pedidos
+- Normalização de dados
+
+### ✅ **Fase 5: Analytics e Métricas**
+- Dashboard com métricas em tempo real
+- Relatórios personalizáveis
+- Análise de coorte e churn
+
+### ✅ **Fase 6: Sistema de Afiliados**
+- Gestão de afiliados e tiers
+- Métricas de performance
+- Dashboard de afiliados
+
+### ✅ **Fase 7: Sistema de Auditoria**
+- Logs de atividades
+- Sistema de alertas
+- Rastreamento de ações críticas
+
+### ✅ **Fase 8: Sincronização**
+- Jobs de sincronização automática
+- Reconciliação de dados
+- Logs de sincronização
+
+## 🛠️ Tecnologias
+
+- **Backend**: NestJS, TypeScript, Prisma
+- **Banco de Dados**: PostgreSQL
+- **Cache**: Redis
+- **Queue**: BullMQ
+- **Documentação**: Swagger/OpenAPI
+- **Testes**: Jest
+- **Integração**: Stripe, Hotmart, Cartpanda
+
+## 🚀 Início Rápido
+
+### Pré-requisitos
+
+- Node.js 18+
+- PostgreSQL 14+
+- Redis 6+
+- npm ou yarn
+
+### Instalação
 
 ```bash
-$ npm install
+# Clone o repositório
+git clone <repository-url>
+cd dashboard-back
+
+# Instale as dependências
+npm install
+
+# Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+
+# Execute as migrações
+npx prisma migrate dev
+
+# Execute o seed
+npx prisma db seed
+
+# Inicie o servidor
+npm run start:dev
 ```
 
-## Compile and run the project
+### Variáveis de Ambiente
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/analytics_platform"
+
+# Redis
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+
+# Encryption
+ENCRYPTION_KEY="your-256-bit-encryption-key-here"
+
+# JWT
+JWT_SECRET="your-jwt-secret"
+JWT_REFRESH_SECRET="your-jwt-refresh-secret"
+
+# Server
+PORT="4000"
+NODE_ENV="development"
+```
+
+## 📚 Documentação
+
+### API Documentation
+- **Swagger UI**: http://localhost:4000/api/docs
+- **JSON Schema**: http://localhost:4000/api/docs-json
+
+### Postman Collection
+- **Collection**: `postman_collection.json`
+- **Environment**: `postman_environment.json`
+- **Documentação**: `docs/POSTMAN_README.md`
+
+### Guias de Desenvolvimento
+- **Development Guide**: `docs/development_guide.md`
+- **Business Rules**: `docs/business_rules.md`
+- **Database Schema**: `docs/database_schema_updated.md`
+
+## 🧪 Testes
+
+### Executar Testes
 
 ```bash
-# development
-$ npm run start
+# Testes unitários
+npm run test
 
-# watch mode
-$ npm run start:dev
+# Testes e2e
+npm run test:e2e
 
-# production mode
-$ npm run start:prod
+# Cobertura de testes
+npm run test:cov
+
+# Testes com watch mode
+npm run test:watch
 ```
 
-## Run tests
+### Testes com Postman
+
+1. Importe a collection e environment no Postman
+2. Execute o fluxo completo de testes
+3. Verifique os logs no console
+
+## 🔧 Scripts Disponíveis
 
 ```bash
-# unit tests
-$ npm run test
+# Desenvolvimento
+npm run start:dev          # Inicia em modo desenvolvimento
+npm run start:debug        # Inicia em modo debug
 
-# e2e tests
-$ npm run test:e2e
+# Produção
+npm run start:prod         # Inicia em modo produção
+npm run build              # Compila o projeto
 
-# test coverage
-$ npm run test:cov
+# Testes
+npm run test               # Executa testes unitários
+npm run test:e2e           # Executa testes e2e
+npm run test:cov           # Executa testes com cobertura
+
+# Database
+npm run prisma:generate    # Gera o cliente Prisma
+npm run prisma:migrate     # Executa migrações
+npm run prisma:seed        # Executa seed
+npm run prisma:studio      # Abre Prisma Studio
+
+# Linting
+npm run lint               # Executa ESLint
+npm run lint:fix           # Corrige problemas de lint
 ```
 
-## Deployment
+## 📊 Endpoints Principais
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Autenticação
+- `POST /auth/login` - Login
+- `POST /auth/refresh` - Renovar token
+- `GET /auth/me` - Perfil do usuário
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Analytics
+- `GET /analytics/dashboard` - Dashboard principal
+- `GET /analytics/revenue` - Métricas de receita
+- `GET /analytics/customers` - Métricas de clientes
+- `POST /analytics/reports` - Gerar relatórios
+
+### Afiliados
+- `GET /affiliates` - Listar afiliados
+- `GET /affiliates/dashboard` - Dashboard de afiliados
+- `GET /affiliates/performance` - Performance de afiliados
+
+### Sincronização
+- `POST /sync/all` - Sincronizar todas as plataformas
+- `GET /sync/stats` - Estatísticas de sincronização
+- `GET /sync/logs` - Logs de sincronização
+
+## 🔄 Fluxo de Dados
+
+```mermaid
+graph TD
+    A[Webhooks] --> B[WebhookProcessor]
+    B --> C[Database]
+    C --> D[Analytics]
+    D --> E[Dashboard]
+    
+    F[Sync Jobs] --> G[Payment Providers]
+    G --> H[Data Reconciliation]
+    H --> C
+    
+    I[Affiliates] --> J[Performance Tracking]
+    J --> K[Commission Calculation]
+    
+    L[Audit System] --> M[Activity Logs]
+    M --> N[Alerts]
+```
+
+## 🚀 Deploy
+
+### Docker
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Build da imagem
+docker build -t analytics-platform .
+
+# Executar container
+docker run -p 4000:4000 analytics-platform
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Produção
 
-## Resources
+```bash
+# Build para produção
+npm run build
 
-Check out a few resources that may come in handy when working with NestJS:
+# Iniciar em produção
+npm run start:prod
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 📈 Monitoramento
 
-## Support
+### Health Checks
+- **Health**: `GET /health`
+- **Metrics**: `GET /metrics`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Logs
+- **Application Logs**: Console e arquivos
+- **Audit Logs**: Sistema de auditoria
+- **Sync Logs**: Logs de sincronização
 
-## Stay in touch
+## 🤝 Contribuição
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-## License
+## 📝 Licença
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+## 🆘 Suporte
+
+- **Documentação**: `docs/` directory
+- **Issues**: GitHub Issues
+- **Email**: dev@analytics-platform.com
+
+## 🎯 Roadmap
+
+- [ ] Integração com mais plataformas
+- [ ] Machine Learning para previsões
+- [ ] API GraphQL
+- [ ] Real-time notifications
+- [ ] Mobile SDK
+
+---
+
+<p align="center">
+  Desenvolvido com ❤️ pela equipe Analytics Platform
+</p>

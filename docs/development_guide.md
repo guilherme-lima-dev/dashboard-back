@@ -1949,9 +1949,6 @@ export class IntegrationCredentialsService {
 # Encryption
 ENCRYPTION_KEY="your-256-bit-encryption-key-here-change-in-production"
 
-# Stripe
-STRIPE_WEBHOOK_SECRET="whsec_..."
-
 # Hotmart
 HOTMART_CLIENT_ID="..."
 HOTMART_CLIENT_SECRET="..."

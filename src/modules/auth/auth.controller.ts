@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import {
     ApiTags,
     ApiOperation,
@@ -171,7 +171,7 @@ export class AuthController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Post('me')
+    @Get('me')
     @HttpCode(HttpStatus.OK)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({

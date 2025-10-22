@@ -8,6 +8,7 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { PlatformsModule } from './modules/platforms/platforms.module';
 import { ProductsModule } from './modules/products/products.module';
 import { OffersModule } from './modules/offers/offers.module';
+import { OfferPlatformMappingsModule } from './modules/offer-platform-mappings/offer-platform-mappings.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { OrdersModule } from './modules/orders/orders.module';
@@ -20,6 +21,12 @@ import { JobsModule } from './jobs/jobs.module';
 import {APP_GUARD} from "@nestjs/core";
 import {JwtAuthGuard} from "./common/guards/jwt-auth.guard";
 import {PermissionsGuard} from "./common/guards/permissions.guard";
+import {IntegrationCredentialsModule} from "./modules/integration-credentials/integration-credential.module";
+import {BullModule} from "@nestjs/bull";
+import {WebhooksModule} from "./modules/webhooks/webhooks.module";
+import {PaymentProvidersModule} from "./modules/payment-providers/payment-providers.module";
+import {SyncModule} from "./modules/sync/sync.module";
+import {BullBoardModule} from "@bull-board/nestjs";
 
 @Module({
   imports: [
@@ -31,6 +38,13 @@ import {PermissionsGuard} from "./common/guards/permissions.guard";
       ttl: 60000,
       limit: 100,
     }]),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }),
+    WebhooksModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -38,6 +52,7 @@ import {PermissionsGuard} from "./common/guards/permissions.guard";
     PlatformsModule,
     ProductsModule,
     OffersModule,
+    OfferPlatformMappingsModule,
     IntegrationsModule,
     CustomersModule,
     OrdersModule,
@@ -47,6 +62,9 @@ import {PermissionsGuard} from "./common/guards/permissions.guard";
     AnalyticsModule,
     AuditModule,
     JobsModule,
+    IntegrationCredentialsModule,
+    PaymentProvidersModule,
+    SyncModule,
   ],
   providers: [
     {
