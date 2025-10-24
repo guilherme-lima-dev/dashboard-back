@@ -12,6 +12,7 @@ Esta collection do Postman contém todos os endpoints implementados para **todas
 - **Fase 6**: Sistema de Afiliados (Affiliates, Performance, Tiers) ✅
 - **Fase 7**: Sistema de Auditoria (Audit Logs, Alerts, Activity Tracking) ✅
 - **Fase 8**: Sistema de Sincronização (Sync Jobs, Reconciliation) ✅
+- **Fase 9**: Sistema de Permissões e Gerenciamento de Usuários ✅
 
 ## Arquivos Incluídos
 
@@ -102,6 +103,39 @@ Execute a collection "Complete Flow Test - All Phases" para testar todo o fluxo 
 - **Customer Analytics** - Analytics detalhados do cliente
 - **Subscription Analytics** - Analytics detalhados da assinatura
 - **Transaction Analytics** - Analytics detalhados da transação
+
+### Permissions & Roles
+- **Get All Permissions** - Listar todas as permissões
+- **Get Permissions by Resource** - Permissões por recurso
+- **Get All Resources** - Listar todos os recursos
+- **Get All Actions** - Listar todas as ações
+- **Get All Roles** - Listar todos os roles
+- **Get Role by ID** - Obter role específico
+- **Create Role** - Criar novo role
+- **Update Role** - Atualizar role
+- **Delete Role** - Deletar role
+- **Get Role Permissions** - Permissões de um role
+- **Update Role Permissions** - Atualizar permissões do role
+- **Get User Roles** - Roles de um usuário
+- **Assign Role to User** - Atribuir role a usuário
+- **Remove Role from User** - Remover role de usuário
+- **Get Permission Stats** - Estatísticas de permissões
+- **Get User Permissions** - Permissões de um usuário
+
+### Users Management
+- **Get All Users** - Listar todos os usuários
+- **Get User by ID** - Obter usuário específico
+- **Create User** - Criar novo usuário
+- **Update User** - Atualizar usuário
+- **Delete User** - Deletar usuário
+- **Change User Password** - Alterar senha do usuário
+- **Reset User Password** - Resetar senha do usuário
+- **Approve User** - Aprovar/rejeitar usuário
+- **Assign Role to User** - Atribuir role a usuário
+- **Remove Role from User** - Remover role de usuário
+- **Get User Permissions** - Permissões de um usuário
+- **Get User Activity** - Atividade do usuário
+- **Get User Stats** - Estatísticas de usuários
 
 ## Flow de Teste Completo
 

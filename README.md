@@ -69,6 +69,14 @@ A **Analytics Platform API** é uma solução completa para análise de dados de
 - Reconciliação de dados
 - Logs de sincronização
 
+### ✅ **Fase 9: Sistema de Permissões e Gerenciamento de Usuários**
+- Gerenciamento completo de permissões
+- Criação e gestão de roles
+- CRUD completo de usuários
+- Atribuição de roles e permissões
+- Rastreamento de atividades do usuário
+- Estatísticas e métricas de usuários
+
 ## 🛠️ Tecnologias
 
 - **Backend**: NestJS, TypeScript, Prisma

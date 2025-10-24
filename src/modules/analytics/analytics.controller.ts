@@ -74,6 +74,46 @@ export class AnalyticsController {
     return this.analyticsService.getMetricsHistory(query);
   }
 
+  @Get('revenue/trend')
+  @RequirePermission('analytics:read')
+  @ApiOperation({ summary: 'Get revenue trend data' })
+  @ApiResponse({ status: 200, description: 'Revenue trend data retrieved successfully' })
+  async getRevenueTrend(@Query() query: MetricsQueryDto) {
+    return this.analyticsService.getRevenueTrend(query);
+  }
+
+  @Get('revenue/by-product')
+  @RequirePermission('analytics:read')
+  @ApiOperation({ summary: 'Get revenue by product' })
+  @ApiResponse({ status: 200, description: 'Revenue by product retrieved successfully' })
+  async getRevenueByProduct(@Query() query: MetricsQueryDto) {
+    return this.analyticsService.getRevenueByProduct(query);
+  }
+
+  @Get('subscriptions/trend')
+  @RequirePermission('analytics:read')
+  @ApiOperation({ summary: 'Get subscription trend data' })
+  @ApiResponse({ status: 200, description: 'Subscription trend data retrieved successfully' })
+  async getSubscriptionTrend(@Query() query: MetricsQueryDto) {
+    return this.analyticsService.getSubscriptionTrend(query);
+  }
+
+  @Get('subscriptions/by-product')
+  @RequirePermission('analytics:read')
+  @ApiOperation({ summary: 'Get subscriptions by product' })
+  @ApiResponse({ status: 200, description: 'Subscriptions by product retrieved successfully' })
+  async getSubscriptionByProduct(@Query() query: MetricsQueryDto) {
+    return this.analyticsService.getSubscriptionByProduct(query);
+  }
+
+  @Get('activities')
+  @RequirePermission('analytics:read')
+  @ApiOperation({ summary: 'Get recent activities' })
+  @ApiResponse({ status: 200, description: 'Recent activities retrieved successfully' })
+  async getRecentActivities(@Query() query: MetricsQueryDto) {
+    return this.analyticsService.getRecentActivities(query);
+  }
+
   @Post('reports')
   @RequirePermission('analytics:read')
   @ApiOperation({ summary: 'Generate report' })
