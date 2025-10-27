@@ -5,9 +5,15 @@ import { AppModule } from './app.module';
 import { createBullBoard } from '@bull-board/api';
 import { ExpressAdapter } from '@bull-board/express';
 import type { Queue } from 'bull';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    // Raw body middleware for webhook signature verification
+    app.use('/webhooks/stripe', bodyParser.raw({ type: 'application/json' }));
+    app.use('/webhooks/hotmart', bodyParser.raw({ type: 'application/json' }));
+    app.use('/webhooks/cartpanda', bodyParser.raw({ type: 'application/json' }));
 
     // Validation Pipe
     app.useGlobalPipes(

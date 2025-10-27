@@ -67,7 +67,7 @@ export class CustomersService {
       this.prisma.customer.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         include: {
           platform: true,
           _count: {

@@ -22,6 +22,11 @@ export class PaymentProvidersService {
             throw new NotFoundException('Plataforma não encontrada');
         }
 
+        // Cartpanda and Hotmart are webhook-only platforms, not used for sync
+        if (platformSlug === 'cartpanda' || platformSlug === 'hotmart') {
+            throw new NotFoundException(`Provider não implementado para sync: ${platformSlug} (webhook-only platform)`);
+        }
+
         switch (platformSlug) {
             case 'stripe':
                 return this.getStripeProvider(platform.id);

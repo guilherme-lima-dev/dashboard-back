@@ -4,38 +4,40 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class StripeWebhookValidator implements IWebhookValidator {
-    validate(signature: string, payload: string, secret: string): boolean {
+    validate(signature: string, payload: string | Buffer, secret: string): boolean {
         try {
             const elements = signature.split(',');
-            const timestamps: string[] = [];
-            const signatures: string[] = [];
+            const timestamp = elements.find(el => el.startsWith('t='))?.split('=')[1];
+            const v1Signature = elements.find(el => el.startsWith('v1='))?.split('=')[1];
 
-            elements.forEach((element) => {
-                const [key, value] = element.split('=');
-                if (key === 't') {
-                    timestamps.push(value);
-                } else if (key === 'v1') {
-                    signatures.push(value);
-                }
-            });
-
-            if (timestamps.length === 0 || signatures.length === 0) {
+            if (!timestamp || !v1Signature) {
                 return false;
             }
 
-            const timestamp = timestamps[0];
+            // Verificar se o timestamp não é muito antigo (tolerância de 5 minutos)
+            const currentTime = Math.floor(Date.now() / 1000);
+            const eventTime = parseInt(timestamp);
+            const tolerance = 300; // 5 minutos em segundos
+
+            if (currentTime - eventTime > tolerance) {
+                console.warn('Webhook timestamp too old, rejecting');
+                return false;
+            }
+
+            // Converter payload para string se for Buffer
+            const payloadString = Buffer.isBuffer(payload) ? payload.toString('utf8') : payload;
+            
             const expectedSignature = crypto
                 .createHmac('sha256', secret)
-                .update(`${timestamp}.${payload}`)
+                .update(`${timestamp}.${payloadString}`)
                 .digest('hex');
 
-            return signatures.some((sig) =>
-                crypto.timingSafeEqual(
-                    Buffer.from(sig),
-                    Buffer.from(expectedSignature)
-                )
+            return crypto.timingSafeEqual(
+                Buffer.from(v1Signature, 'hex'),
+                Buffer.from(expectedSignature, 'hex')
             );
         } catch (error) {
+            console.error('Error validating webhook signature:', error);
             return false;
         }
     }

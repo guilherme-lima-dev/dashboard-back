@@ -45,7 +45,7 @@ export class WebhooksController {
         @Headers('stripe-signature') signature: string,
         @Req() req: Request,
     ) {
-        const payload = (req as any).rawBody || req.body;
+        const payload = req.body; // Agora será o raw body devido ao middleware
         return this.webhooksService.handleWebhook('stripe', signature, payload);
     }
 

@@ -103,7 +103,7 @@ export class SubscriptionsService {
       this.prisma.subscription.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         include: {
           customer: true,
           product: true,
