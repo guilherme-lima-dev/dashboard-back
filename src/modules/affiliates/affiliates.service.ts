@@ -57,7 +57,7 @@ export class AffiliatesService {
 
   async findAll(query: AffiliateQueryDto) {
     const { platformId, tier, isActive, search, page = 1, limit = 20, sortBy = 'totalRevenueBrl', sortOrder = 'desc' } = query;
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * Number(limit);
 
     const where: any = {};
 
@@ -84,7 +84,7 @@ export class AffiliatesService {
       this.prisma.affiliate.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         orderBy: { [sortBy as string]: sortOrder },
       }),
       this.prisma.affiliate.count({ where }),
@@ -96,7 +96,7 @@ export class AffiliatesService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / Number(limit)),
       },
     };
   }

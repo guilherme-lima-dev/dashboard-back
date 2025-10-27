@@ -73,7 +73,7 @@ export class TransactionsService {
       this.prisma.transaction.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         include: {
           customer: true,
           platform: true,

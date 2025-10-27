@@ -68,8 +68,8 @@ export class WebhooksService {
                 throw new BadRequestException('Webhook secret não configurado');
             }
 
-            const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
-            const isValid = validator.validate(signature, payloadString, webhookSecret.decryptedValue);
+            // O payload já é o raw body (Buffer ou string) devido ao middleware
+            const isValid = validator.validate(signature, payload, webhookSecret.decryptedValue);
 
             if (!isValid) {
                 this.logger.error(`Invalid webhook signature for platform: ${platformSlug}`);
@@ -81,12 +81,14 @@ export class WebhooksService {
             this.logger.warn(`Skipping webhook validation for platform: ${platformSlug} (development mode)`);
         }
 
-        const eventData = validator.extractEventData(payload);
+        // Converter payload para objeto JSON se for Buffer
+        const payloadObject = Buffer.isBuffer(payload) ? JSON.parse(payload.toString('utf8')) : payload;
+        const eventData = validator.extractEventData(payloadObject);
 
         // Verificar se temos um externalEventId válido
         if (!eventData.externalEventId) {
             this.logger.warn('No externalEventId found in webhook payload, skipping idempotency check');
-            return this.processWebhookEvent(platform, eventData, payload);
+            return this.processWebhookEvent(platform, eventData, payloadObject);
         }
 
         const existingEvent = await this.prisma.webhookEvent.findUnique({

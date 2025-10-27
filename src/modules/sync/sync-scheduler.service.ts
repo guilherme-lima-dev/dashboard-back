@@ -43,6 +43,12 @@ export class SyncScheduler {
   async syncPlatform(platformId: string, platformSlug: string): Promise<void> {
     this.logger.log(`Starting sync for platform: ${platformSlug}`);
 
+    // Skip sync for Cartpanda and Hotmart - they only use webhooks
+    if (platformSlug === 'cartpanda' || platformSlug === 'hotmart') {
+      this.logger.log(`Skipping sync for ${platformSlug} - webhook-only platform`);
+      return;
+    }
+
     // Sync subscriptions
     await this.syncSubscriptions(platformId, platformSlug);
 
