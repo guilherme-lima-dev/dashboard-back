@@ -37,19 +37,9 @@ export class MetricsService {
 
     const upsertWhereClause: any = {
       metricDate: date,
+      platformId: platformId || null,
+      productId: productId || null,
     };
-    
-    if (platformId) {
-      upsertWhereClause.platformId = platformId;
-    } else {
-      upsertWhereClause.platformId = null;
-    }
-    
-    if (productId) {
-      upsertWhereClause.productId = productId;
-    } else {
-      upsertWhereClause.productId = null;
-    }
 
     await this.prisma.dailyMetrics.upsert({
         where: {
@@ -167,11 +157,14 @@ export class MetricsService {
       },
     });
 
+    // Para transações, não incluir productId pois não existe na tabela
+    const transactionWhereClause = {
+      platformId: whereClause.platformId,
+      status: 'succeeded',
+    };
+
     const transactions = await this.prisma.transaction.findMany({
-      where: {
-        ...whereClause,
-        status: 'succeeded',
-      },
+      where: transactionWhereClause,
       select: {
         netAmountBrl: true,
         netAmountUsd: true,
@@ -265,13 +258,23 @@ export class MetricsService {
   }
 
   private async calculateCustomerMetrics(whereClause: any) {
+    // Para customers, não incluir productId pois não existe na tabela
+    const customerWhereClause = {
+      platformId: whereClause.platformId,
+    };
+
+    // Para transações, não incluir productId pois não existe na tabela
+    const transactionWhereClause = {
+      platformId: whereClause.platformId,
+    };
+
     const [
       newCustomers,
       totalCustomers,
     ] = await Promise.all([
       this.prisma.customer.count({
         where: {
-          ...whereClause,
+          ...customerWhereClause,
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lt: new Date(new Date().setHours(23, 59, 59, 999)),
@@ -279,13 +282,13 @@ export class MetricsService {
         },
       }),
       this.prisma.customer.count({
-        where: whereClause,
+        where: customerWhereClause,
       }),
     ]);
 
     const revenueData = await this.prisma.transaction.aggregate({
       where: {
-        ...whereClause,
+        ...transactionWhereClause,
         status: 'succeeded',
         transactionType: 'payment',
       },
@@ -333,9 +336,14 @@ export class MetricsService {
     const periodEnd = new Date(periodStart);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
+    // Para customers, não incluir productId pois não existe na tabela
+    const customerWhereClause = {
+      platformId: whereClause.platformId,
+    };
+
     const customersCount = await this.prisma.customer.count({
       where: {
-        ...whereClause,
+        ...customerWhereClause,
         createdAt: {
           gte: cohortDate,
           lt: new Date(cohortDate.getTime() + 24 * 60 * 60 * 1000),
@@ -362,9 +370,14 @@ export class MetricsService {
 
     const retentionRate = customersCount > 0 ? (retainedCount / customersCount) * 100 : 0;
 
+    // Para transações, não incluir productId pois não existe na tabela
+    const transactionWhereClause = {
+      platformId: whereClause.platformId,
+    };
+
     const revenueData = await this.prisma.transaction.aggregate({
       where: {
-        ...whereClause,
+        ...transactionWhereClause,
         customer: {
           createdAt: {
             gte: cohortDate,

@@ -18,7 +18,22 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:all": "./run-all-tests.sh",
+    "test:controllers": "npm run test:e2e -- --testPathPattern=controller.e2e-spec.ts",
+    "test:analytics": "npm run test:e2e -- --testPathPattern=analytics.controller.e2e-spec.ts",
+    "test:auth": "npm run test:e2e -- --testPathPattern=auth.controller.e2e-spec.ts",
+    "test:users": "npm run test:e2e -- --testPathPattern=users.controller.e2e-spec.ts",
+    "test:platforms": "npm run test:e2e -- --testPathPattern=platforms.controller.e2e-spec.ts",
+    "test:products": "npm run test:e2e -- --testPathPattern=products.controller.e2e-spec.ts",
+    "test:customers": "npm run test:e2e -- --testPathPattern=customers.controller.e2e-spec.ts",
+    "test:transactions": "npm run test:e2e -- --testPathPattern=transactions.controller.e2e-spec.ts",
+    "test:subscriptions": "npm run test:e2e -- --testPathPattern=subscriptions.controller.e2e-spec.ts",
+    "test:affiliates": "npm run test:e2e -- --testPathPattern=affiliates.controller.e2e-spec.ts",
+    "test:permissions": "npm run test:e2e -- --testPathPattern=permissions.controller.e2e-spec.ts",
+    "test:audit": "npm run test:e2e -- --testPathPattern=audit.controller.e2e-spec.ts",
+    "test:sync": "npm run test:e2e -- --testPathPattern=sync.controller.e2e-spec.ts",
+    "test:integration-credentials": "npm run test:e2e -- --testPathPattern=integration-credentials.controller.e2e-spec.ts"
   },
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"

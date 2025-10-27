@@ -754,16 +754,30 @@ async function main() {
           });
 
           if (joaoTransaction && mariaTransaction) {
-            await prisma.transactionSubscription.create({
-              data: {
+            await prisma.transactionSubscription.upsert({
+              where: {
+                unique_transaction_subscription: {
+                  transactionId: joaoTransaction.id,
+                  subscriptionId: joaoSubscription.id,
+                },
+              },
+              update: {},
+              create: {
                 transactionId: joaoTransaction.id,
                 subscriptionId: joaoSubscription.id,
                 amountAllocatedBrl: 28.40,
               },
             });
 
-            await prisma.transactionSubscription.create({
-              data: {
+            await prisma.transactionSubscription.upsert({
+              where: {
+                unique_transaction_subscription: {
+                  transactionId: mariaTransaction.id,
+                  subscriptionId: mariaSubscription.id,
+                },
+              },
+              update: {},
+              create: {
                 transactionId: mariaTransaction.id,
                 subscriptionId: mariaSubscription.id,
                 amountAllocatedBrl: 47.40,
