@@ -25,11 +25,37 @@ export class AnalyticsService {
   }
 
   async getRevenueMetrics(where: any): Promise<RevenueMetricsDto> {
+    const hasDateRange = where.metricDate && (where.metricDate.gte || where.metricDate.lte);
+    
+    if (hasDateRange) {
+      const aggregatedMetrics = await this.prisma.dailyMetrics.aggregate({
+        where,
+        _sum: {
+          revenueBrl: true,
+          revenueUsd: true,
+          refundsBrl: true,
+          refundsUsd: true,
+          mrrBrl: true,
+          mrrUsd: true,
+          arrBrl: true,
+          arrUsd: true,
+        },
+      });
+
+      return {
+        mrrBrl: Number(aggregatedMetrics._sum.mrrBrl) || 0,
+        mrrUsd: Number(aggregatedMetrics._sum.mrrUsd) || 0,
+        arrBrl: Number(aggregatedMetrics._sum.arrBrl) || 0,
+        arrUsd: Number(aggregatedMetrics._sum.arrUsd) || 0,
+        revenueBrl: Number(aggregatedMetrics._sum.revenueBrl) || 0,
+        revenueUsd: Number(aggregatedMetrics._sum.revenueUsd) || 0,
+        refundsBrl: Number(aggregatedMetrics._sum.refundsBrl) || 0,
+        refundsUsd: Number(aggregatedMetrics._sum.refundsUsd) || 0,
+      };
+    }
+
     const metrics = await this.prisma.dailyMetrics.findFirst({
-      where: {
-        ...where,
-        metricDate: where.metricDate || new Date(),
-      },
+      where,
       orderBy: { metricDate: 'desc' },
     });
 
@@ -59,6 +85,33 @@ export class AnalyticsService {
   }
 
   async getSubscriptionMetrics(where: any): Promise<SubscriptionMetricsDto> {
+    if (where.metricDate && typeof where.metricDate === 'object' && (where.metricDate.gte || where.metricDate.lte)) {
+      const aggregatedMetrics = await this.prisma.dailyMetrics.aggregate({
+        where,
+        _sum: {
+          newSubscriptionsCount: true,
+          churnCount: true,
+        },
+        _avg: {
+          activeSubscriptionsCount: true,
+          trialSubscriptionsCount: true,
+          canceledSubscriptionsCount: true,
+          churnRate: true,
+          trialConversionRate: true,
+        },
+      });
+
+      return {
+        activeSubscriptionsCount: Math.round(aggregatedMetrics._avg.activeSubscriptionsCount || 0),
+        trialSubscriptionsCount: Math.round(aggregatedMetrics._avg.trialSubscriptionsCount || 0),
+        canceledSubscriptionsCount: Math.round(aggregatedMetrics._avg.canceledSubscriptionsCount || 0),
+        newSubscriptionsCount: aggregatedMetrics._sum.newSubscriptionsCount || 0,
+        churnCount: aggregatedMetrics._sum.churnCount || 0,
+        churnRate: Number(aggregatedMetrics._avg.churnRate || 0),
+        trialConversionRate: Number(aggregatedMetrics._avg.trialConversionRate || 0),
+      };
+    }
+
     const metrics = await this.prisma.dailyMetrics.findFirst({
       where: {
         ...where,
@@ -91,6 +144,31 @@ export class AnalyticsService {
   }
 
   async getCustomerMetrics(where: any): Promise<CustomerMetricsDto> {
+    if (where.metricDate && typeof where.metricDate === 'object' && (where.metricDate.gte || where.metricDate.lte)) {
+      const aggregatedMetrics = await this.prisma.dailyMetrics.aggregate({
+        where,
+        _sum: {
+          newCustomersCount: true,
+        },
+        _avg: {
+          totalCustomersCount: true,
+          averageRevenuePerUserBrl: true,
+          averageRevenuePerUserUsd: true,
+          customerLifetimeValueBrl: true,
+          customerLifetimeValueUsd: true,
+        },
+      });
+
+      return {
+        newCustomersCount: aggregatedMetrics._sum.newCustomersCount || 0,
+        totalCustomersCount: Math.round(aggregatedMetrics._avg.totalCustomersCount || 0),
+        averageRevenuePerUserBrl: Number(aggregatedMetrics._avg.averageRevenuePerUserBrl || 0),
+        averageRevenuePerUserUsd: Number(aggregatedMetrics._avg.averageRevenuePerUserUsd || 0),
+        customerLifetimeValueBrl: Number(aggregatedMetrics._avg.customerLifetimeValueBrl || 0),
+        customerLifetimeValueUsd: Number(aggregatedMetrics._avg.customerLifetimeValueUsd || 0),
+      };
+    }
+
     const metrics = await this.prisma.dailyMetrics.findFirst({
       where: {
         ...where,
@@ -181,11 +259,8 @@ export class AnalyticsService {
     }));
   }
 
-  // Novos métodos para gráficos
   async getRevenueTrend(query: MetricsQueryDto): Promise<any> {
     const where = this.buildWhereClause(query);
-    
-    // Buscar dados históricos dos últimos 12 meses
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
     const startDate = new Date(endDate);
     startDate.setMonth(startDate.getMonth() - 12);
@@ -201,12 +276,11 @@ export class AnalyticsService {
       orderBy: { metricDate: 'asc' },
     });
 
-    // Agrupar por mês
     const monthlyData = new Map();
     for (let i = 0; i < 12; i++) {
       const date = new Date(endDate);
       date.setMonth(date.getMonth() - i);
-      const monthKey = date.toISOString().slice(0, 7); // YYYY-MM
+      const monthKey = date.toISOString().slice(0, 7);
       monthlyData.set(monthKey, {
         month: monthKey,
         revenue: 0,
@@ -214,7 +288,6 @@ export class AnalyticsService {
       });
     }
 
-    // Preencher com dados reais
     metrics.forEach(metric => {
       const monthKey = metric.metricDate.toISOString().slice(0, 7);
       if (monthlyData.has(monthKey)) {
@@ -233,8 +306,6 @@ export class AnalyticsService {
 
   async getRevenueByProduct(query: MetricsQueryDto): Promise<any> {
     const where = this.buildWhereClause(query);
-    
-    // Buscar transações diretamente
     const transactions = await this.prisma.transaction.findMany({
       where: {
         platformId: where.platformId,
@@ -260,7 +331,6 @@ export class AnalyticsService {
       },
     });
 
-    // Agrupar por produto
     const productRevenue = new Map();
     transactions.forEach(transaction => {
       transaction.transactionSubscriptions.forEach(ts => {
@@ -271,7 +341,6 @@ export class AnalyticsService {
             productName: product.name,
             revenue: 0,
           };
-          // Dividir a receita da transação entre os produtos
           const transactionRevenue = Number(transaction.netAmountBrl);
           const subscriptionCount = transaction.transactionSubscriptions.length;
           const revenuePerSubscription = subscriptionCount > 0 ? transactionRevenue / subscriptionCount : 0;
@@ -294,8 +363,6 @@ export class AnalyticsService {
 
   async getSubscriptionTrend(query: MetricsQueryDto): Promise<any> {
     const where = this.buildWhereClause(query);
-    
-    // Buscar dados históricos dos últimos 12 meses
     const endDate = query.endDate ? new Date(query.endDate) : new Date();
     const startDate = new Date(endDate);
     startDate.setMonth(startDate.getMonth() - 12);
@@ -311,7 +378,6 @@ export class AnalyticsService {
       orderBy: { metricDate: 'asc' },
     });
 
-    // Agrupar por mês
     const monthlyData = new Map();
     for (let i = 0; i < 12; i++) {
       const date = new Date(endDate);
@@ -324,7 +390,6 @@ export class AnalyticsService {
       });
     }
 
-    // Preencher com dados reais
     metrics.forEach(metric => {
       const monthKey = metric.metricDate.toISOString().slice(0, 7);
       if (monthlyData.has(monthKey)) {
@@ -341,7 +406,6 @@ export class AnalyticsService {
   }
 
   async getSubscriptionByProduct(query: MetricsQueryDto): Promise<any> {
-    // Buscar assinaturas por produto
     const subscriptions = await this.prisma.subscription.findMany({
       where: {
         platformId: query.platformId,
@@ -357,7 +421,6 @@ export class AnalyticsService {
       },
     });
 
-    // Agrupar por produto
     const productSubscriptions = new Map();
     subscriptions.forEach(subscription => {
       const product = subscription.product;
@@ -383,7 +446,6 @@ export class AnalyticsService {
   }
 
   async getRecentActivities(query: MetricsQueryDto): Promise<any[]> {
-    // Buscar atividades recentes (últimas 24 horas)
     const endDate = new Date();
     const startDate = new Date();
     startDate.setHours(startDate.getHours() - 24);
@@ -391,7 +453,6 @@ export class AnalyticsService {
     const activities: any[] = [];
 
     try {
-      // Novas assinaturas
       const newSubscriptions = await this.prisma.subscription.findMany({
         where: {
           platformId: query.platformId,
@@ -426,7 +487,6 @@ export class AnalyticsService {
         });
       });
 
-      // Novos clientes
       const newCustomers = await this.prisma.customer.findMany({
         where: {
           platformId: query.platformId,
@@ -454,7 +514,6 @@ export class AnalyticsService {
         });
       });
 
-      // Transações bem-sucedidas
       const successfulTransactions = await this.prisma.transaction.findMany({
         where: {
           platformId: query.platformId,
@@ -490,12 +549,8 @@ export class AnalyticsService {
           currency: 'BRL',
         });
       });
-    } catch (error) {
-      console.error('Erro ao buscar atividades recentes:', error);
-      // Retornar atividades vazias em caso de erro
-    }
+    } catch (error) {}
 
-    // Ordenar por timestamp (mais recente primeiro)
     return activities
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 10);
@@ -503,8 +558,6 @@ export class AnalyticsService {
 
   private buildWhereClause(query: MetricsQueryDto): any {
     const where: any = {};
-
-    // Se não há datas específicas, usar o period para calcular o range
     if (!query.startDate && !query.endDate && query.period) {
       const now = new Date();
       const startDate = new Date();
@@ -517,10 +570,10 @@ export class AnalyticsService {
           startDate.setDate(now.getDate() - 7);
           break;
         case 'monthly':
-          startDate.setMonth(now.getMonth() - 1);
+          startDate.setDate(now.getDate() - 30);
           break;
         case 'yearly':
-          startDate.setFullYear(now.getFullYear() - 1);
+          startDate.setDate(now.getDate() - 365);
           break;
       }
       
@@ -556,8 +609,6 @@ export class AnalyticsService {
 
   private buildCohortWhereClause(query: MetricsQueryDto): any {
     const where: any = {};
-
-    // Se não há datas específicas, usar o period para calcular o range
     if (!query.startDate && !query.endDate && query.period) {
       const now = new Date();
       const startDate = new Date();

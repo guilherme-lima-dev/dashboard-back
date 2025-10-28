@@ -35,19 +35,24 @@ export class MetricsService {
       ...churnMetrics,
     };
 
-    const upsertWhereClause: any = {
-      metricDate: date,
-      platformId: platformId || null,
-      productId: productId || null,
-    };
-
-    await this.prisma.dailyMetrics.upsert({
-        where: {
-          metricDate_platformId_productId: upsertWhereClause,
-        },
-      update: metrics,
-      create: metrics,
+    const existing = await this.prisma.dailyMetrics.findFirst({
+      where: {
+        metricDate: date,
+        platformId: platformId ?? null,
+        productId: productId ?? null,
+      },
     });
+
+    if (existing) {
+      await this.prisma.dailyMetrics.update({
+        where: { id: existing.id },
+        data: metrics,
+      });
+    } else {
+      await this.prisma.dailyMetrics.create({
+        data: metrics,
+      });
+    }
 
     this.logger.log(`Daily metrics calculated and saved for ${date.toISOString().split('T')[0]}`);
   }
@@ -157,7 +162,6 @@ export class MetricsService {
       },
     });
 
-    // Para transações, não incluir productId pois não existe na tabela
     const transactionWhereClause = {
       platformId: whereClause.platformId,
       status: 'succeeded',
@@ -258,12 +262,10 @@ export class MetricsService {
   }
 
   private async calculateCustomerMetrics(whereClause: any) {
-    // Para customers, não incluir productId pois não existe na tabela
     const customerWhereClause = {
       platformId: whereClause.platformId,
     };
 
-    // Para transações, não incluir productId pois não existe na tabela
     const transactionWhereClause = {
       platformId: whereClause.platformId,
     };
@@ -336,7 +338,6 @@ export class MetricsService {
     const periodEnd = new Date(periodStart);
     periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-    // Para customers, não incluir productId pois não existe na tabela
     const customerWhereClause = {
       platformId: whereClause.platformId,
     };
@@ -369,8 +370,6 @@ export class MetricsService {
     });
 
     const retentionRate = customersCount > 0 ? (retainedCount / customersCount) * 100 : 0;
-
-    // Para transações, não incluir productId pois não existe na tabela
     const transactionWhereClause = {
       platformId: whereClause.platformId,
     };

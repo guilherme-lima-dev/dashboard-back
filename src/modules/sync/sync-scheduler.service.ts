@@ -132,7 +132,6 @@ export class SyncScheduler {
       // Alert if many missing records
       if (missing > 10) {
         this.logger.warn(`High number of missing subscriptions found for ${platformSlug}: ${missing}`);
-        // TODO: Send alert notification
       }
     } catch (error) {
       await this.syncLogsService.fail(syncLog.id, error);

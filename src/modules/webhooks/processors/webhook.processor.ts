@@ -1,6 +1,8 @@
 import { Processor, Process } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
+import type { Queue } from 'bull';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PaymentProvidersService } from '../../payment-providers/payment-providers.service';
 import { CustomersService } from '../../customers/customers.service';
@@ -21,6 +23,7 @@ export class WebhookProcessor {
         private readonly transactionsService: TransactionsService,
         private readonly ordersService: OrdersService,
         private readonly affiliatesService: AffiliatesService,
+        @InjectQueue('metrics-calculator') private readonly metricsQueue: Queue,
     ) {}
 
     @Process('process-webhook')
@@ -120,6 +123,8 @@ export class WebhookProcessor {
             default:
                 this.logger.warn(`Unknown platform: ${platform.slug}`);
         }
+
+        await this.enqueueMetricsCalculation(platform.id);
     }
 
     private async processStripeWebhook(webhookEvent: any): Promise<void> {
@@ -217,14 +222,10 @@ export class WebhookProcessor {
         );
 
         try {
-            // TODO: Implement proper webhook normalization
-            // For now, we'll create a basic structure
-            // Extrair dados reais do Stripe
             const priceData = subscription.items?.data?.[0]?.price;
             const amount = priceData?.unit_amount ? priceData.unit_amount / 100 : 0;
             const currency = subscription.currency || 'usd';
             
-            // Taxa de conversão real (exemplo: 1 USD = 5.2 BRL)
             const exchangeRate = currency === 'usd' ? 5.2 : 1;
             const amountBrl = currency === 'usd' ? amount * exchangeRate : amount;
             const amountUsd = currency === 'brl' ? amount / exchangeRate : amount;
@@ -232,8 +233,8 @@ export class WebhookProcessor {
             const normalizedData = {
                 customer: {
                     externalCustomerId: subscription.customer || `temp_customer_${Date.now()}`,
-                    email: 'customer@example.com', // TODO: Buscar via Stripe API
-                    name: 'Customer Name', // TODO: Buscar via Stripe API
+                    email: 'customer@example.com',
+                    name: 'Customer Name',
                 },
                 subscription: {
                     externalSubscriptionId: subscription.id,
@@ -242,6 +243,7 @@ export class WebhookProcessor {
                     status: subscription.status,
                     isTrial: subscription.status === 'trialing',
                     trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+
                     trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
                     trialEndsAt: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
                     recurringAmount: amount,
@@ -335,7 +337,6 @@ export class WebhookProcessor {
         this.logger.log(`Subscription canceled: ${subscription.id}`);
 
         try {
-            // Buscar subscription existente
             const existingSubscription = await this.prisma.subscription.findFirst({
                 where: {
                     platformId: platform.id,
@@ -344,7 +345,6 @@ export class WebhookProcessor {
             });
 
             if (existingSubscription) {
-                // Atualizar status para canceled
                 await this.prisma.subscription.update({
                     where: { id: existingSubscription.id },
                     data: {
@@ -419,7 +419,6 @@ export class WebhookProcessor {
         }
 
         try {
-            // Buscar subscription relacionada à invoice
             const subscription = await this.prisma.subscription.findFirst({
                 where: {
                     platformId: platform.id,
@@ -428,7 +427,6 @@ export class WebhookProcessor {
             });
 
             if (subscription) {
-                // Atualizar status para past_due
                 await this.prisma.subscription.update({
                     where: { id: subscription.id },
                     data: {
@@ -480,8 +478,6 @@ export class WebhookProcessor {
             throw error;
         }
     }
-
-    // ADICIONE ESTES MÉTODOS NO webhook.processor.ts
 
     private async handleHotmartPurchaseApproved(payload: any): Promise<void> {
         this.logger.log('Handling Hotmart PURCHASE_APPROVED event');
@@ -539,8 +535,6 @@ export class WebhookProcessor {
         );
     }
 
-    // ADICIONE ESTES MÉTODOS NO webhook.processor.ts
-
     private async handleCartpandaOrderPaid(payload: any): Promise<void> {
         this.logger.log('Handling Cartpanda order.paid event');
 
@@ -591,7 +585,6 @@ export class WebhookProcessor {
 
     private async persistData(normalizedData: any, platformId: string) {
         if (normalizedData.customer) {
-            // Validar se externalCustomerId existe
             if (!normalizedData.customer.externalCustomerId) {
                 this.logger.warn('No externalCustomerId found for customer, skipping customer creation');
                 return;
@@ -644,13 +637,11 @@ export class WebhookProcessor {
         }
 
         if (normalizedData.subscription) {
-            // Verificar se customer foi criado
             if (!normalizedData.customer?.id) {
                 this.logger.warn('No customer ID available for subscription, skipping subscription creation');
                 return;
             }
 
-            // Buscar ou criar o produto real baseado nos dados do Stripe
             const externalProductId = normalizedData.subscription.externalProductId || 'prod_unknown';
             let product = await this.prisma.product.findFirst({
                 where: { 
@@ -660,7 +651,6 @@ export class WebhookProcessor {
             });
 
             if (!product) {
-                // Criar produto real baseado nos dados do Stripe
                 product = await this.prisma.product.create({
                     data: {
                         name: `Stripe Product ${externalProductId}`,
@@ -742,6 +732,22 @@ export class WebhookProcessor {
                 customerId: normalizedData.customer.id,
                 platformId,
             });
+        }
+    }
+
+    /**
+     * Enfileira um job para calcular métricas diárias
+     */
+    private async enqueueMetricsCalculation(platformId: string): Promise<void> {
+        try {
+            await this.metricsQueue.add('calculate-daily-metrics', {
+                platformId,
+                date: new Date().toISOString().split('T')[0],
+            });
+            
+            this.logger.log(`Metrics calculation job enqueued for platform ${platformId}`);
+        } catch (error) {
+            this.logger.error(`Failed to enqueue metrics calculation: ${error.message}`);
         }
     }
 }

@@ -28,6 +28,9 @@ import { AffiliatesModule } from '../affiliates/affiliates.module';
         BullModule.registerQueue({
             name: 'webhooks',
         }),
+        BullModule.registerQueue({
+            name: 'metrics-calculator',
+        }),
     ],
     controllers: [WebhooksController],
     providers: [
