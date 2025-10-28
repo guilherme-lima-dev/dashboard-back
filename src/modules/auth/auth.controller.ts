@@ -9,6 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -113,35 +114,21 @@ export class AuthController {
     @Public()
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Renovar access token',
-        description: 'Gera um novo par de tokens (access + refresh) usando um refresh token válido. O refresh token antigo é revogado.',
-    })
-    @ApiBody({ type: RefreshTokenDto })
-    @ApiResponse({
-        status: 200,
-        description: 'Tokens renovados com sucesso',
-        schema: {
-            example: {
-                accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                expiresIn: '15m',
-            },
-        },
-    })
-    @ApiResponse({
-        status: 401,
-        description: 'Refresh token inválido ou expirado',
-        schema: {
-            example: {
-                statusCode: 401,
-                message: 'Refresh token inválido ou revogado',
-                error: 'Unauthorized',
-            },
-        },
-    })
+    @ApiOperation({ summary: 'Renovar token de acesso' })
+    @ApiResponse({ status: 200, description: 'Token renovado com sucesso' })
+    @ApiResponse({ status: 401, description: 'Token de refresh inválido' })
     async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
         return this.authService.refreshTokens(refreshTokenDto.refreshToken);
+    }
+
+    @Public()
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Recuperar senha' })
+    @ApiResponse({ status: 200, description: 'Nova senha gerada com sucesso' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        return this.authService.forgotPassword(forgotPasswordDto);
     }
 
     @UseGuards(JwtAuthGuard)

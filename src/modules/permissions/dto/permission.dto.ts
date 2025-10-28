@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional } from 'class-validator';
 
 export class PermissionDto {
   @ApiProperty({ description: 'Permission ID' })
@@ -116,28 +117,38 @@ export class UserRoleDto {
 
 export class CreateRoleDto {
   @ApiProperty({ description: 'Role name' })
+  @IsString()
   name: string;
 
   @ApiProperty({ description: 'Role slug' })
+  @IsString()
   slug: string;
 
   @ApiProperty({ description: 'Role description', required: false })
+  @IsOptional()
+  @IsString()
   description?: string;
 }
 
 export class UpdateRoleDto {
   @ApiProperty({ description: 'Role name', required: false })
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @ApiProperty({ description: 'Role description', required: false })
+  @IsOptional()
+  @IsString()
   description?: string;
 }
 
 export class AssignRoleDto {
   @ApiProperty({ description: 'User ID' })
+  @IsString()
   userId: string;
 
   @ApiProperty({ description: 'Role ID' })
+  @IsString()
   roleId: string;
 }
 

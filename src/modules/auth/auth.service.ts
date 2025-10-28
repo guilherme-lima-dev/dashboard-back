@@ -3,6 +3,7 @@ import {
     UnauthorizedException,
     ConflictException,
     BadRequestException,
+    NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -181,6 +183,28 @@ export class AuthService {
         });
 
         return { message: 'Logout realizado com sucesso' };
+    }
+
+    async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: forgotPasswordDto.email },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Usuário não encontrado com este email');
+        }
+
+        const newPassword = Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash: hashedPassword },
+        });
+
+        return {
+            message: 'Nova senha gerada com sucesso. Verifique o console para a nova senha temporária.'
+        };
     }
 
     private async generateTokens(
