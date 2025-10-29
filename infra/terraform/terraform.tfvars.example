@@ -1,0 +1,25 @@
+# terraform.tfvars.example
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region  = "us-east-1"  # Cheapest region
+environment = "production"
+
+# Project Configuration
+project_name = "analytics-platform"
+domain_name  = "yourdomain.com"  # Replace with your domain
+
+# Sensitive Variables (DO NOT COMMIT)
+# Generate secure values and store in terraform.tfvars (gitignored)
+
+# RDS Master Password
+# Generate with: openssl rand -base64 32
+db_master_password = "REPLACE_WITH_SECURE_PASSWORD"
+
+# JWT Secret
+# Generate with: openssl rand -base64 64
+jwt_secret = "REPLACE_WITH_JWT_SECRET"
+
+# Encryption Key (64 hex characters for AES-256-GCM)
+# Generate with: openssl rand -hex 32
+encryption_key = "REPLACE_WITH_64_HEX_CHARACTERS"
